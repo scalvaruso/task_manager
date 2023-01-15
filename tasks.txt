@@ -1,0 +1,9 @@
+admin, Register Users with taskManager.py, Use taskManager.py to add the usernames and passwords for all team members that will be using this program., 10 Oct 2019, 20 Oct 2019, No
+admin, Assign initial tasks, Use taskManager.py to assign each team member with appropriate tasks, 10 Oct 2019, 25 Oct 2019, No
+user1, task 1 for user 1, user1 should make the first log in with the given password, 06 Jan 2023, 31 Jan 2023, No
+user2, task 1 for user 2, user2 should make the first log in with the given password, 06 Jan 2023, 31 Jan 2023, No
+user3, task 1 for user 3, user3 should make the first log in with the given password, 06 Jan 2023, 31 Jan 2023, No
+admin, Upload task_manager.py, Use Dropbox to upload the task for review, 06 Jan 2023, 07 Jan 2023, No
+admin, Ask for code review, Go to the Dashboard and ask one of the reviewer to check your code, 06 Jan 2023, 07 Jan 2023, No
+detchen, check my tasks, use task manager to check my tasks, 09 Jan 2023, 10 Jan 2023, No
+user4, try4, testing if user 4 is recorded, 14 Jan 2023, 15 Jan 2023, No
