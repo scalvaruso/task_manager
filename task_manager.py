@@ -69,7 +69,33 @@ def main():
             pass
 
         elif menu == "vm":
-            view_mine(user_id, tasks)
+            my_keys = view_mine(user_id, tasks)
+            
+            # Edit menu.
+            
+            while True:
+                
+                choice = int(input(frame(["Please, select one of the options below:",
+                "",
+                "Your task are:",
+                f"{my_keys}",
+                "",
+                "Task number - to edit the task",
+                "\t-1\t  - to go back to previous menu",
+                ])))
+
+
+                if choice == -1:
+                    break
+
+                # Proceed to the edit only if the task selected belong to the user logged in.
+
+                elif choice not in my_keys:
+                    print(frame(["Sorry you cannot select others tasks."]))
+                    pass
+                else:
+                    edit_task(tasks, users, (choice))
+                    
             pass
 
         elif menu == "s" and admin:
@@ -267,14 +293,16 @@ def view_all(tasks):
 
 def view_mine(id, tasks):
     my_tasks = {}
-
+    my_keys = []
     for key in tasks.keys():
         if id == tasks[key][0]:
             my_tasks.update({key: tasks[key]})
+            my_keys.append(key)
         else:
             pass
 
     view_all(my_tasks)
+    return my_keys
 
     # NOTE function to be completed
     """
@@ -286,7 +314,56 @@ def view_mine(id, tasks):
     # edit_task(to_edit)
 
 
-def edit_task(ed_task):
+def edit_task(tasks_list, users_list, to_edit):
+    task = tasks_list[to_edit]
+
+    # Check if the task has not been completed and can be edited.
+
+    if task[5] == "Yes":
+        print(frame(["Sorry the task selected has been already completed and cannot be modified",
+        "",
+        "Please select another task",
+        ]))
+        return
+
+    # Edit menu.
+
+    while True:
+        todo = input(frame(["Please, select one of the options below:",
+                "",
+                "1 - mark the task as completed",
+                "2 - change the due date",
+                "3 - change the user",
+                "",
+                "0 - to go back to previous menu",
+                ]))
+
+        # Perform the editing.
+
+        if todo == "0":
+            return
+
+        # Change the task status
+
+        elif todo == "1":
+            tasks_list[to_edit][5] = "Yes"
+            writefile = open("tasks.txt", "w+", encoding="utf-8")
+            to_write = ""
+
+            for item in range(1,(len(tasks_list)+1)):
+
+                if item > 1:
+                    to_write = f"\n"    
+                to_write += f"{tasks_list[item][0]}, "
+                to_write += f"{tasks_list[item][1]}, "
+                to_write += f"{tasks_list[item][2]}, "
+                to_write += f"{tasks_list[item][3]}, "
+                to_write += f"{tasks_list[item][4]}, "
+                to_write += f"{tasks_list[item][5]}, "
+                writefile.write(to_write)
+            writefile.close()
+            return
+            
     ...
 
 
