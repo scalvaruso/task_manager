@@ -5,10 +5,10 @@ from datetime import datetime
 
 # ******************************   NOTE   ******************************
 # The following module is an additional program to format the output.
-# Please copy the file 'border.py' in the same folder of 'task_manager.py'.
+# Please copy the file 'borders.py' in the same folder of 'task_manager.py'.
 # **********************************************************************
 
-from border import border
+from borders import frame
 
 
 # Main function.
@@ -46,7 +46,7 @@ def main():
         colour = "\033[0m"
 
     os.system("clear")
-    print(colour + border([f"\t\t\tWelcome {user_id}"]) + "\033[0m")
+    print(colour + frame([f"\t\t\tWelcome {user_id}"]) + "\033[0m")
 
     # Present the options menu to the user.
 
@@ -78,12 +78,12 @@ def main():
 
         elif menu == "e":
             os.system("clear")
-            print(border(["Thank you for using Task Manager.","","Goodbye!!!"]))
+            print(frame(["Thank you for using Task Manager.","","Goodbye!!!"]))
             exit()
 
         else:
             os.system("clear")
-            print(border(["Sorry","The option selected is not valid.","Please Try again"]))
+            print(frame(["Sorry","The option selected is not valid.","Please Try again"]))
 
 
 # ========== Login function ==========
@@ -111,11 +111,11 @@ def login(login):
             colour = "\n\033[0m"
             if retry == 1:
                 colour = "\n\033[91m"
-            print(colour + border([f"Sorry, '{id}' is not a valid ID!",f"{retry} more logon attempts left"]) + f"\nPlease enter a valid ID: " + "\n\033[0m", end="")
+            print(colour + frame([f"Sorry, '{id}' is not a valid ID!",f"{retry} more logon attempts left"]) + f"\nPlease enter a valid ID: " + "\n\033[0m", end="")
             continue
         else:
             os.system("clear")
-            print(border(["Sorry, You have reached the maximum logon attempts!","Please, try again later."]))
+            print(frame(["Sorry, You have reached the maximum logon attempts!","Please, try again later."]))
             exit()
 
     # Ask the user for their password.
@@ -141,11 +141,11 @@ def login(login):
             colour = "\n\033[0m"
             if retry == 1:
                 colour = "\n\033[91m"
-            print(colour + border(["Incorrect Password!",f"{retry} more logon attempts left.","Please enter a valid Password"]) + "\n\033[0m", end="")
+            print(colour + frame(["Incorrect Password!",f"{retry} more logon attempts left.","Please enter a valid Password"]) + "\n\033[0m", end="")
             continue
         else:
             os.system("clear")
-            print(border(["Sorry, You have reached the maximum logon attempts!","Please, try again later."]))
+            print(frame(["Sorry, You have reached the maximum logon attempts!","Please, try again later."]))
             exit()
 
     return id, admin
@@ -174,7 +174,7 @@ def menu_option_1(menu):
         
     menu_options.append("e  - Exit")
     
-    return f"{colour}{border(menu_options)}\033[0m"
+    return f"{colour}{frame(menu_options)}\033[0m"
 
 
 # Register a new user after checking if it is already existing.
@@ -260,7 +260,7 @@ def view_all(tasks):
         print_tasks.append(f"Due Date:\t\t\t{tasks[key][4]}")
         print_tasks.append(f"Task completed:\t  {tasks[key][5]}")
         
-        print(border(print_tasks))
+        print(frame(print_tasks))
 
 
 # Print all the tasks recorded for the user logged in.
@@ -302,7 +302,7 @@ def display_stat(users, tasks):
     tasks_number = f"Number of tasks:\t{str(len(tasks.keys()))}"
 
     os.system("clear")
-    print(border(["", users_number, tasks_number, ""]))
+    print(frame(["", users_number, tasks_number, ""]))
 
 
 if __name__ == "__main__":

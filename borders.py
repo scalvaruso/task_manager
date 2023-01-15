@@ -12,10 +12,10 @@ def main():
     ]
 
     os.system("clear")
-    print("\033[94m" + border(menu_list) + "\033[0m")
+    print("\033[94m" + frame(menu_list) + "\033[0m")
 
 
-def border(menu_list):
+def frame(menu_list):
 
     menu_width = 48
 
