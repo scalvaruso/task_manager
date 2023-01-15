@@ -7,3 +7,4 @@ admin, Upload task_manager.py, Use Dropbox to upload the task for review, 06 Jan
 admin, Ask for code review, Go to the Dashboard and ask one of the reviewer to check your code, 06 Jan 2023, 07 Jan 2023, No
 detchen, check my tasks, use task manager to check my tasks, 09 Jan 2023, 10 Jan 2023, No
 user4, try4, testing if user 4 is recorded, 14 Jan 2023, 15 Jan 2023, No
+admin, git, create a new repository, 15 Jan 2023, 15 Jan 2023, No
