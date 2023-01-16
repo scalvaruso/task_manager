@@ -52,7 +52,7 @@ def main():
 
     while True:
 
-        menu = input(menu_option_1(admin)).lower()
+        menu = input(entry_menu(admin)).lower()
         
         # Execute the function corresponding to the selected option.
 
@@ -69,12 +69,19 @@ def main():
             pass
 
         elif menu == "vm":
-            my_keys = view_mine(user_id, tasks)
-            
+
+            check = True  # Variable to check if the tasks should be printed or not.
+
             # Edit menu.
             
             while True:
-                
+
+                # The following 'if' allows to print the tasks only the first time,
+                # and when the user connected to the tasks has been changed.
+                                
+                if check:
+                    my_keys = view_mine(user_id, tasks)
+
                 choice = int(input(frame(["Please, select one of the options below:",
                 "",
                 "Your task are:",
@@ -92,14 +99,19 @@ def main():
 
                 elif choice not in my_keys:
                     print(frame(["Sorry you cannot select others tasks."]))
+                    check = False
                     pass
                 else:
-                    edit_task(tasks, users, (choice))
+                    check = edit_task(tasks, users, (choice))
                     
             pass
+        
+        elif menu == "gr" and admin:
+            ...
+            pass
 
-        elif menu == "s" and admin:
-            display_stat(users, tasks)
+        elif menu == "ds" and admin:
+            display_statistics(users, tasks)
             pass
 
         elif menu == "e":
@@ -112,7 +124,7 @@ def main():
             print(frame(["Sorry","The option selected is not valid.","Please Try again"]))
 
 
-# ========== Login function ==========
+# ==================== Login function ====================
 # Program will ask and validate the user login and password:
 # - terminates after 10 wrong ID entries.
 # - terminates after 3 wrong password entries.
@@ -127,9 +139,13 @@ def login(login):
     while True:
         id = input("")
         
+        # Check if user is registered.
+
         if id in login.keys():
             break
-        
+
+        # Retry count for users.
+
         retry -= 1
         
         if retry > 0:
@@ -153,12 +169,14 @@ def login(login):
     while True:
         user_pw = input("")
 
-        # Check validity of password
+        # Check validity of password.
 
         if user_pw == login[id]:
             if id == "admin":
                 admin = True
             break
+        
+        # Retry count for passwords.
 
         retry -= 1
 
@@ -179,11 +197,11 @@ def login(login):
 
 # Generate a different menu for admin or users.
 
-def menu_option_1(menu):
+def entry_menu(extended):
     
     menu_options = ["Please, select one of the options below:",""]
 
-    if menu:
+    if extended:
         colour = "\033[93m"
         menu_options.append("r  - Registering a user")
     else:
@@ -193,8 +211,9 @@ def menu_option_1(menu):
     menu_options.append("va - View all tasks")
     menu_options.append("vm - View my task")
 
-    if menu:
-        menu_options.append("s  - Statistics")
+    if extended:
+        menu_options.append("gr - Generate Reports")
+        menu_options.append("ds - Display Statistics")
     else:
         menu_options.append("")
         
@@ -243,16 +262,8 @@ def reg_user(old_users):
 # Add a new task to an existing user.
 
 def add_task(users, old_tasks):
-        
-    while True:
-        user_task = input(f"Enter a user for the new task: ")
-        
-        if user_task in users.keys():
-            break
-        else:
-            print("The user you selected does not exist.\n")
-            continue
-    
+
+    user_task = input_user(users)
     new_task = input("Enter the name of the task: ")
     description = input("Enter a short description of the task: ")
     assignment_date = (datetime.today()).strftime("%d %b %Y")
@@ -304,17 +315,9 @@ def view_mine(id, tasks):
     view_all(my_tasks)
     return my_keys
 
-    # NOTE function to be completed
-    """
-    if id == "admin":
-        to_edit = tasks
-    else:
-        to_edit = my_tasks
-    """
-    # edit_task(to_edit)
-
 
 def edit_task(tasks_list, users_list, to_edit):
+
     task = tasks_list[to_edit]
 
     # Check if the task has not been completed and can be edited.
@@ -324,11 +327,12 @@ def edit_task(tasks_list, users_list, to_edit):
         "",
         "Please select another task",
         ]))
-        return
+        return False
 
-    # Edit menu.
+    # Present the possible edits.
 
     while True:
+
         todo = input(frame(["Please, select one of the options below:",
                 "",
                 "1 - mark the task as completed",
@@ -338,42 +342,90 @@ def edit_task(tasks_list, users_list, to_edit):
                 "0 - to go back to previous menu",
                 ]))
 
-        # Perform the editing.
+        # Exit editing.
 
         if todo == "0":
-            return
+            return False
 
-        # Change the task status
+        # Change the task status.
 
         elif todo == "1":
+
             tasks_list[to_edit][5] = "Yes"
-            writefile = open("tasks.txt", "w+", encoding="utf-8")
-            to_write = ""
+            write_to_file(tasks_list)
+            return False
 
-            for item in range(1,(len(tasks_list)+1)):
+        # Change the due date.
+        
+        elif todo == "2":
 
-                if item > 1:
-                    to_write = f"\n"    
-                to_write += f"{tasks_list[item][0]}, "
-                to_write += f"{tasks_list[item][1]}, "
-                to_write += f"{tasks_list[item][2]}, "
-                to_write += f"{tasks_list[item][3]}, "
-                to_write += f"{tasks_list[item][4]}, "
-                to_write += f"{tasks_list[item][5]}, "
-                writefile.write(to_write)
-            writefile.close()
-            return
+            new_due = input("Enter a new due date in the format (DD Mmm YYYY): ")
+            tasks_list[to_edit][4] = new_due
+            write_to_file(tasks_list)
+            return False
+        
+        # Change the user for the selected task.
+
+        elif todo == "3":
             
-    ...
+            new_user = input_user(users_list)
+            tasks_list[to_edit][0] = new_user
+            write_to_file(tasks_list)
+            return True
+
+
+# Write all the tasks to the txt file.
+
+def write_to_file(task_to_write, txt_out="tasks.txt"):
+
+    writefile = open(txt_out, "w+", encoding="utf-8")
+    to_write = ""
+
+    for item in range(1,(len(task_to_write)+1)):
+
+        if item > 1:
+            to_write = f"\n"
+
+        to_write += f"{task_to_write[item][0]}, "
+        to_write += f"{task_to_write[item][1]}, "
+        to_write += f"{task_to_write[item][2]}, "
+        to_write += f"{task_to_write[item][3]}, "
+        to_write += f"{task_to_write[item][4]}, "
+        to_write += f"{task_to_write[item][5]}, "
+        writefile.write(to_write)
+
+    writefile.close()
+
+
+# Check if the input name is existing in the list of users. 
+
+def input_user(existing_users):
+    
+    while True:
+        new_user = input(f"Enter a user for the new task: ")
+        
+        if new_user in existing_users.keys():
+            break
+        else:
+            print(frame(["The user you selected does not exist."]))
+            continue
+    
+    return new_user
 
 
 def gen_reports():
+    
+    ...
+
+
+def display_statistics(users, tasks):
+    display_stat(users, tasks)  # NOTE to be removed when function is implemented.
     ...
 
 
 # Print the total number of users and tasks registered.
 
-def display_stat(users, tasks):
+def display_stat(users, tasks):  # Temp function
 
     users_number = f"Number of user: \t{str(len(users.keys()))}"
     tasks_number = f"Number of tasks:\t{str(len(tasks.keys()))}"
