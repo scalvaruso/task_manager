@@ -4,7 +4,9 @@ import os
 from datetime import datetime
 
 # ******************************   NOTE   ******************************
-# The following module is an additional program to format the output.
+# The following module is an additional program to print frames
+# around input prompts and output.
+# 
 # Please copy the file 'borders.py' in the same folder of 'task_manager.py'.
 # **********************************************************************
 
@@ -19,9 +21,9 @@ def main():
 
     users = {}
 
-    with open("user.txt", "r", encoding="utf-8") as users_list:
+    with open("user.txt", "r", encoding="utf-8") as users_read:
         
-        for line in users_list:
+        for line in users_read:
             name, password = line.split(", ")
             users.update({name: password.strip("\n")})
 
@@ -29,9 +31,9 @@ def main():
 
     tasks = {}
 
-    with open("tasks.txt", "r", encoding="utf-8") as tasks_list:
+    with open("tasks.txt", "r", encoding="utf-8") as tasks_read:
 
-        for pos, line in enumerate(tasks_list, 1):
+        for pos, line in enumerate(tasks_read, 1):
             line_split = line.split(", ")
             line_split[-1] = line_split[-1].strip("\n")
             tasks.update({pos: line_split[0:]})
@@ -41,30 +43,35 @@ def main():
     user_id, admin = login(users)
 
     if admin:
-        colour = "\033[93m"
+        col = 93
     else:
-        colour = "\033[0m"
+        col = 0
 
     os.system("clear")
-    print(colour + frame([f"\t\t\tWelcome {user_id}"]) + "\033[0m")
+    frame([f"\t\t\tWelcome {user_id}"], colour=col)
 
     # Present the options menu to the user.
 
     while True:
 
-        menu = input(entry_menu(admin)).lower()
+        menu = frame(entry_menu(admin), colour=col, window="in").lower()
         
         # Execute the function corresponding to the selected option.
 
         if menu == "r" and admin:
+            
+            os.system("clear")
             users = reg_user(users)
             pass
 
         elif menu == "a":
+            
+            os.system("clear")
             tasks = add_task(users, tasks)
             pass
 
         elif menu == "va":
+            
             view_all(tasks)
             pass
 
@@ -82,23 +89,25 @@ def main():
                 if check:
                     my_keys = view_mine(user_id, tasks)
 
-                choice = int(input(frame(["Please, select one of the options below:",
-                "",
-                "Your task are:",
-                f"{my_keys}",
-                "",
-                "Task number - to edit the task",
-                "\t-1\t  - to go back to previous menu",
-                ])))
+                choice = int(frame(
+                    [
+                    "Please, select one of the options below:",
+                    "",
+                    "Your task are:",
+                    f"{my_keys}",
+                    "",
+                    "Task number - to edit the task",
+                    "\t-1\t  - to go back to previous menu",
+                    ], window="in"))
 
 
                 if choice == -1:
                     break
 
-                # Proceed to the edit only if the task selected belong to the user logged in.
+                # Proceed to the edit menu only if the task selected belong to the user logged in.
 
                 elif choice not in my_keys:
-                    print(frame(["Sorry you cannot select others tasks."]))
+                    frame(["Sorry you cannot select others tasks."])
                     check = False
                     pass
                 else:
@@ -107,21 +116,32 @@ def main():
             pass
         
         elif menu == "gr" and admin:
-            ...
+            
+            os.system("clear")
+            tasks_stats(tasks)
+            user_stats(users, tasks)
+            frame(["Statistics successfully saved to:","","'task_overview.txt' and 'user_overview.txt'"], colour="green")
+
+
             pass
 
         elif menu == "ds" and admin:
+            
+            os.system("clear")
             display_statistics(users, tasks)
+            
             pass
 
         elif menu == "e":
+            
             os.system("clear")
-            print(frame(["Thank you for using Task Manager.","","Goodbye!!!"]))
+            frame(["Thank you for using Task Manager.","","Goodbye!!!"], colour="cyan")
             exit()
 
         else:
+            
             os.system("clear")
-            print(frame(["Sorry","The option selected is not valid.","Please Try again"]))
+            frame(["Sorry","The option selected is not valid.","Please Try again"])
 
 
 # ==================== Login function ====================
@@ -131,13 +151,15 @@ def main():
 
 def login(login):
 
-    print("\nEnter your ID: ", end="")
+    os.system("clear")
+    message = ["Enter your ID"]
 
     # Ask the user for their ID.
     
     retry = 10
+    col = 0
     while True:
-        id = input("")
+        id = frame(message, colour=col, window="in")
         
         # Check if user is registered.
 
@@ -150,24 +172,25 @@ def login(login):
         
         if retry > 0:
             os.system("clear")
-            colour = "\n\033[0m"
+
             if retry == 1:
-                colour = "\n\033[91m"
-            print(colour + frame([f"Sorry, '{id}' is not a valid ID!",f"{retry} more logon attempts left"]) + f"\nPlease enter a valid ID: " + "\n\033[0m", end="")
+                col = 91
+            message = [f"Sorry, '{id}' is not a valid ID!",f"{retry} more logon attempts left","","Please enter a valid ID"]
             continue
         else:
             os.system("clear")
-            print(frame(["Sorry, You have reached the maximum logon attempts!","Please, try again later."]))
+            frame(["Sorry, You have reached the maximum logon attempts!","Please, try again later."])
             exit()
 
     # Ask the user for their password.
 
     admin = False
-    print("\nEnter your Password: ", end="")
+    message = ["Enter your Password"]
 
     retry = 3
+    col = 0
     while True:
-        user_pw = input("")
+        user_pw = frame(message, colour=col, window="in")
 
         # Check validity of password.
 
@@ -182,14 +205,14 @@ def login(login):
 
         if retry > 0:
             os.system("clear")
-            colour = "\n\033[0m"
+    
             if retry == 1:
-                colour = "\n\033[91m"
-            print(colour + frame(["Incorrect Password!",f"{retry} more logon attempts left.","Please enter a valid Password"]) + "\n\033[0m", end="")
+                col = 91
+            message = ["Incorrect Password!","",f"{retry} more logon attempts left.","Please enter a valid Password"]
             continue
         else:
             os.system("clear")
-            print(frame(["Sorry, You have reached the maximum logon attempts!","Please, try again later."]))
+            frame(["Sorry, You have reached the maximum logon attempts!","Please, try again later."])
             exit()
 
     return id, admin
@@ -202,10 +225,8 @@ def entry_menu(extended):
     menu_options = ["Please, select one of the options below:",""]
 
     if extended:
-        colour = "\033[93m"
         menu_options.append("r  - Registering a user")
     else:
-        colour = "\033[0m"
         menu_options.append("")
     menu_options.append("a  - Adding a task")
     menu_options.append("va - View all tasks")
@@ -219,43 +240,50 @@ def entry_menu(extended):
         
     menu_options.append("e  - Exit")
     
-    return f"{colour}{frame(menu_options)}\033[0m"
+    return menu_options
 
 
 # Register a new user after checking if it is already existing.
 
 def reg_user(old_users):
     
-    # Check if the ID enter already exists.
+    # Check if the ID entered already exists.
 
     while True:
-        new_user = input("Enter a new user: ")
+        new_user = frame(["Please, enter a new user"], window="in")
 
         if new_user in old_users.keys():
-            print(f"The name '{new_user}' is already existing.\nPlease")
+            os.system("clear")
+            frame([f"The name '{new_user}' is already existing."])
             continue
         else:
             break
+    
+    os.system("clear")
 
     # Ask for a valid password.
 
     while True:
-        new_password = input("Enter a new password: ")
-        pw_confirmation = input("Confirm the password: ")
+        new_password = frame(["Enter a new password"], window="in")
+        pw_confirmation = frame(["Confirm the password"], window="in")
 
         if new_password == pw_confirmation:
             break
         else:
-            print("The passwords do not match!")
+            os.system("clear")
+            frame(["The passwords do not match!"])
 
     # Update the variable containing the users and passwords
     # and write to the file 'user.txt'.
 
     old_users.update({new_user: new_password})
     
-    with open("user.txt", "a", encoding="utf-8") as users_list:
-        users_list.write(f"\n{new_user}, {new_password}")
+    with open("user.txt", "a", encoding="utf-8") as users_append:
+        users_append.write(f"\n{new_user}, {new_password}")
     
+    os.system("clear")
+    frame(["New user successfully recorded!"])
+
     return old_users
 
 
@@ -263,11 +291,17 @@ def reg_user(old_users):
 
 def add_task(users, old_tasks):
 
-    user_task = input_user(users)
-    new_task = input("Enter the name of the task: ")
-    description = input("Enter a short description of the task: ")
-    assignment_date = (datetime.today()).strftime("%d %b %Y")
-    due_date = input("Enter the due date in the format (DD Mmm YYYY): ")
+    # Check if the user exist.
+
+    user_task = valid_user(users)
+
+    new_task = frame(["Enter the name of the task"], window="in")
+    description = frame(["Enter a short description of the task"], window="in")
+    assignment_date = datetime.today().strftime("%d %b %Y")
+
+    # Check the date is entered in the format 'DD Mmm YYYY'.
+
+    due_date = vali_date(["Enter the due date in the format (DD Mmm YYYY)"])
 
     # Update the variable containing the tasks
     # and write it to the file 'tasks.txt'.
@@ -276,28 +310,61 @@ def add_task(users, old_tasks):
     task_num = len(old_tasks.keys())
     old_tasks.update({(task_num+1): new_task_data})
 
-    with open("tasks.txt", "a", encoding="utf-8") as tasks_list:
-        tasks_list.write(f"\n{user_task}, {new_task}, {description}, {assignment_date}, {due_date}, No")
+    with open("tasks.txt", "a", encoding="utf-8") as tasks_append:
+        tasks_append.write(f"\n{user_task}, {new_task}, {description}, {assignment_date}, {due_date}, No")
     
+    os.system("clear")
+    frame(["New task successfully recorded!"], colour="green")
+
     return old_tasks
 
 
-# Print all the tasks recorded.
+# Check the date is in the correct format.
+
+def vali_date(message):
+    
+    while True:
+        in_date = frame(message, window="in")
+        
+        try:
+            datetime.strptime(in_date, '%d %b %Y')
+            return in_date
+        except:
+            message = ["Invalid date","","Please, enter the date in this format: (DD Mmm YYYY)"]
+
+
+# Format and print all the tasks recorded.
 
 def view_all(tasks):
     os.system("clear")
 
     for key in tasks.keys():
 
-        print_tasks = [f"Task number:\t \t{key}"]
-        print_tasks.append(f"User:\t\t\t\t{tasks[key][0]}")
-        print_tasks.append(f"Task:\t\t\t\t{tasks[key][1]}")
-        print_tasks.append(f"Description:\t \t{tasks[key][2]}")
+        print_tasks = [f"Task number:\t\t  {key}"]
+        print_tasks.append(f"User:\t\t\t\t\t{tasks[key][0]}")
+        print_tasks.append(f"Task:\t\t\t\t\t{tasks[key][1]}")
+
+        description_line = (f"Description:\t\t{tasks[key][2]}").strip("\n")
+        description = ""
+        words = description_line.split(" ")
+
+        for word in words:
+            word = word.replace("\t", "    ")
+
+            if len(description+word) < 74:
+                description += word + " "
+            else:
+                print_tasks.append(description)
+                description = "\t"*5 + word + " "
+
+            description = description.replace("\t", "    ")
+
+        print_tasks.append(description)
         print_tasks.append(f"Date assignement:\t{tasks[key][3]}")
-        print_tasks.append(f"Due Date:\t\t\t{tasks[key][4]}")
+        print_tasks.append(f"Due Date:\t\t\t  {tasks[key][4]}")
         print_tasks.append(f"Task completed:\t  {tasks[key][5]}")
         
-        print(frame(print_tasks))
+        frame(print_tasks)
 
 
 # Print all the tasks recorded for the user logged in.
@@ -316,61 +383,66 @@ def view_mine(id, tasks):
     return my_keys
 
 
-def edit_task(tasks_list, users_list, to_edit):
+# This function allows to edit a selected task.
 
-    task = tasks_list[to_edit]
+def edit_task(tasks_for_edit, users_for_edit, to_edit):
+
+    task = tasks_for_edit[to_edit]
 
     # Check if the task has not been completed and can be edited.
 
     if task[5] == "Yes":
-        print(frame(["Sorry the task selected has been already completed and cannot be modified",
+        frame(["Sorry the task selected has been already completed and cannot be modified",
         "",
         "Please select another task",
-        ]))
+        ], colour="yellow")
         return False
 
     # Present the possible edits.
 
     while True:
 
-        todo = input(frame(["Please, select one of the options below:",
-                "",
-                "1 - mark the task as completed",
-                "2 - change the due date",
-                "3 - change the user",
-                "",
-                "0 - to go back to previous menu",
-                ]))
+        to_change = frame(
+            ["Please, select one of the options below:",
+            "",
+            "1 - mark the task as completed",
+            "2 - change the due date",
+            "3 - change the user",
+            "",
+            "0 - to go back to previous menu",
+            ],
+            window="in"
+            )
 
         # Exit editing.
 
-        if todo == "0":
+        if to_change == "0":
             return False
 
         # Change the task status.
 
-        elif todo == "1":
+        elif to_change == "1":
 
-            tasks_list[to_edit][5] = "Yes"
-            write_to_file(tasks_list)
+            tasks_for_edit[to_edit][5] = "Yes"
+            write_to_file(tasks_for_edit)
             return False
 
         # Change the due date.
         
-        elif todo == "2":
+        elif to_change == "2":
 
-            new_due = input("Enter a new due date in the format (DD Mmm YYYY): ")
-            tasks_list[to_edit][4] = new_due
-            write_to_file(tasks_list)
+            new_due = vali_date(["Enter a new due date in the format (DD Mmm YYYY)"])
+            tasks_for_edit[to_edit][4] = new_due
+            write_to_file(tasks_for_edit)
             return False
         
         # Change the user for the selected task.
 
-        elif todo == "3":
+        elif to_change == "3":
             
-            new_user = input_user(users_list)
-            tasks_list[to_edit][0] = new_user
-            write_to_file(tasks_list)
+            new_user = valid_user(users_for_edit)
+            tasks_for_edit[to_edit][0] = new_user
+            write_to_file(tasks_for_edit)
             return True
 
 
@@ -399,39 +471,275 @@ def write_to_file(task_to_write, txt_out="tasks.txt"):
 
 # Check if the input name is existing in the list of users. 
 
-def input_user(existing_users):
+def valid_user(existing_users):
     
     while True:
-        new_user = input(f"Enter a user for the new task: ")
+        new_user = frame(["Enter a user for the new task"], window="in")
         
         if new_user in existing_users.keys():
             break
         else:
-            print(frame(["The user you selected does not exist."]))
+            os.system("clear")
+            frame(["The user you selected does not exist."])
             continue
     
     return new_user
 
 
-def gen_reports():
-    
-    ...
+# Execute statistics on the tasks and save them to 'task_overview.txt'.
 
+def tasks_stats(tasks_list):
+
+    # Calculate total number of tasks.
+
+    total_tasks = len(tasks_list.keys())
+
+    # Calculate total number of completed tasks.
+
+    tot_completed = 0
+
+    for pos in range(1,total_tasks+1):
+        if tasks_list[pos][5] == "Yes":
+            tot_completed += 1
+
+    # Calculate total number of uncompleted tasks
+    # and total number of uncompleted and overdue tasks.
+
+    tot_incomplete = 0
+    tot_overdue = 0
+
+    for pos in range(1,total_tasks+1):
+        if tasks_list[pos][5] == "No":
+            if overdue(tasks_list[pos][4]):
+                tot_overdue += 1
+            tot_incomplete += 1
+
+    # Calculate percentage of incomplete tasks.
+
+    perc_incomplete = tot_incomplete/total_tasks * 100
+
+    # Calculate percentage of overdue tasks.
+
+    perc_overdue = tot_overdue/total_tasks * 100
+
+    # Save results.
+
+    to_write = ["\t\t\t\t\t\t\t Task Overview",
+        "",
+        f"Total tasks: {total_tasks}",
+        f"Completed tasks: {tot_completed}",
+        f"Incomplete tasks: {tot_incomplete}",
+        f"Overdue tasks: {tot_overdue}",
+        f"Percentage of incomplete tasks: {perc_incomplete:.2f}%",
+        f"Percentage of overdue tasks: {perc_overdue:.2f}%",
+    ]
+
+    with open("task_overview.txt", "w+", encoding="utf-8") as write_stats:
+        for item in to_write:
+            write_stats.write(f"{item}\n")
+
+
+# Execute statistics about users and tasks and save them to 'user_overview.txt'.
+
+def user_stats(users_list, tasks_list):
+    
+    # Total number of users.
+
+    total_users = len(users_list.keys())
+
+    # Total number of tasks.
+
+    total_tasks = len(tasks_list.keys())
+    
+    to_write = ["\t\t\t\t\t\t\t User Overview",
+        "",
+        f"Total number of users: {total_users}",
+        f"Total number of tasks: {total_tasks}",
+        "",
+    ]
+
+    for user in users_list.keys():
+
+        usr_tasks = 0
+        usr_completed = 0
+        usr_incomplete = 0
+        usr_overdue = 0
+
+        # Calculate:
+        # - total tasks assigned
+        # - total completed
+        # - total incomplete
+        # - total incomplete and overdue.
+
+        for pos in range(1,total_tasks+1):
+
+            if tasks_list[pos][0] == user:
+                usr_tasks += 1
+
+                if tasks_list[pos][5]=="Yes":
+                    usr_completed += 1
+                else:
+                    usr_incomplete += 1
+
+                    if overdue(tasks_list[pos][4]):
+                        usr_overdue += 1
+
+        # Calculate percentage of tasks assigned to the user.
+
+        usr_perc = f"{(usr_tasks/total_tasks * 100):.2f}%"
+
+        if usr_tasks == 0:
+            usr_comp_perc = "N/A"
+            usr_incomp_perc = "N/A"
+            usr_over_perc = "N/A"
+            pass
+
+        else:
+   
+            # Calculate percentage of completed tasks.
+
+            usr_comp_perc = f"{(usr_completed/usr_tasks * 100):.2f}%"
+
+            # Calculate percentage of uncompleted tasks.
+
+            usr_incomp_perc = f"{(usr_incomplete/usr_tasks * 100):.2f}%"
+
+            # Calculate percentage of uncompleted and overdue tasks.
+
+            usr_over_perc = f"{(usr_overdue/usr_tasks * 100):.2f}%"
+
+        # Format the results in an easy to read way.
+
+        space_usr = "·" * (16 - len(user))
+        space_tot = " " * (5 - len(str(usr_tasks)))
+        space_tperc = " " * (8 - len(usr_perc))
+        space_cperc = " " * (8 - len(usr_comp_perc))
+        space_iperc = " " * (8 - len(usr_incomp_perc))
+        space_operc = " " * (8 - len(usr_over_perc))
+
+        output = f"Number of tasks for {user} {space_usr} :{space_tot}{usr_tasks}"
+        output += f"    Percent of the total tasks:{space_tperc}{usr_perc}"
+        output += f"    Completed:{space_cperc}{usr_comp_perc}"
+        output += f"    Incomplete:{space_iperc}{usr_incomp_perc}"
+        output += f"    Overdue:{space_operc}{usr_over_perc}"
+        
+        to_write.append(output)
+
+    # Save results to the file 'user_overview.txt'.
+
+    with open("user_overview.txt", "w+", encoding="utf-8") as write_stats:
+        for item in to_write:
+            write_stats.write(f"{item}\n")
+
+
+# Check if the task is overdue.
+
+def overdue(duedate):
+    due_date = datetime.strptime(duedate, '%d %b %Y')
+    today = datetime.today()
+
+    if due_date <= today:
+        return True
+    else:
+        return False
+
+
+# Print out the reports saved in 'task_overview.txt' and 'user_overview.txt'.
 
 def display_statistics(users, tasks):
-    display_stat(users, tasks)  # NOTE to be removed when function is implemented.
-    ...
+    
+    overview_print = []
 
+    # Read the statistics from the file 'task_overview.txt'
+    # and create a formatting for printing it out.
+    # If the file does not exist, it execute the function to generate the file.
 
-# Print the total number of users and tasks registered.
+    while True:
+        try:
+            with open("task_overview.txt", "r", encoding="utf-8") as task_overview:
+                
+                for line in task_overview:
 
-def display_stat(users, tasks):  # Temp function
+                    line = line.strip("\n")
 
-    users_number = f"Number of user: \t{str(len(users.keys()))}"
-    tasks_number = f"Number of tasks:\t{str(len(tasks.keys()))}"
+                    if line[-8:]=="Overview" or line=="":
 
-    os.system("clear")
-    print(frame(["", users_number, tasks_number, ""]))
+                        overview_print.append(line)
+                    else:
+                        text, val = line.split(": ")
+                        space1 = "·" * (36 - len(text.strip(" ")))
+                        space2 = " " * (8 - len(val.strip(" ")))
+                        if val[-1] == "%":
+                            space2 += "    "
+                        line = text + " " + space1 + " :" + space2 + val
+                        overview_print.append(line)
+
+            break
+        except FileNotFoundError:
+            tasks_stats(tasks)
+
+    overview_print.append(""*2)
+
+    # Read the statistics from the file 'user_overview.txt'
+    # and create a formatting for printing it out.
+    # If the file does not exist, it execute the function to generate the file.
+
+    while True:
+        try:
+            with open("user_overview.txt", "r", encoding="utf-8") as user_overview:
+                
+                for line in user_overview:
+                    
+                    line = line.strip("\n")
+
+                    if line[0:5] == "Total":
+
+                        text, val = line.split(": ")
+                        space1 = "·" * (36 - len(text.strip(" ")))
+                        space2 = " " * (8 - len(val.strip(" ")))
+                        line = text + " " + space1 + " :" + space2 + val
+                        overview_print.append(line)
+
+                    elif line[0:6] == "Number":
+                        
+                        overview_print.append("")
+
+                        line0, split1 = line.strip(" ").split("Percent of the total tasks:")
+                        val2, split2 = split1.strip(" ").split("Completed:")
+                        val3, split3 = split2.strip(" ").split("Incomplete:")
+                        val4, split4 = split3.strip(" ").split("Overdue:")
+                        val5 = split4.strip(" ")
+                        line1a, val1 = line0.split(" :")
+                        line1a = line1a.replace("·","")
+                        val1 = val1.strip(" ")
+                        space0 = "·" * (37 - len(line1a))
+                        space1 = " " * (8 - len(val1))
+                        line1 = line1a + space0 + " :" + space1 + val1
+                        space2 = " " * (12 - len(val2.strip(" ")))
+                        line2 = "Percent of the total tasks: " + "·"*9 + " :" + space2 + val2
+                        space3 = " " * (12 - len(val3.strip(" ")))
+                        line3 = "Tasks completed " + "·"*21 + " :" + space3 + val3
+                        space4 = " " * (12 - len(val4.strip(" ")))
+                        line4 = "Tasks incomplete " + "·"*20 + " :" + space4 + val4
+                        space5 = " " * (12 - len(val5))
+                        line5 = "Tasks overdue " + "·"*23 + " :" + space5 + val5
+                      
+                        overview_print.append(line1)
+                        overview_print.append(line2)
+                        overview_print.append(line3)
+                        overview_print.append(line4)
+                        overview_print.append(line5)
+                    
+                    else:
+                        overview_print.append(line)
+
+            break
+        except FileNotFoundError:
+            tasks_stats(users)
+
+    # Print the statistics.
+
+    frame(overview_print)
 
 
 if __name__ == "__main__":

@@ -11,40 +11,66 @@ def main():
     "",
     ]
 
+    col = frame(["Enter a colour"], window="in")
     os.system("clear")
-    print("\033[94m" + frame(menu_list) + "\033[0m")
+    #print("\033[94m" + frame(menu_list) + "\033[0m")
+    frame(menu_list, colour=col)
 
 
-def frame(menu_list):
+# This function create a frame around the content of a list.
+# Any item of the list is considered a new line.
+# The colour can be changed specifying a value for 'colour'.
+# Changing the value of 'window' to 'input' it will take an input from the user.
 
-    menu_width = 48
+def frame(menu_list, colour=0, window="print"):
 
-    # max_width = max([(len(i)+4) for i in menu_list])
+    # Set the colour of the frame.
+
+    if type(colour) == str:
+        colour = colour.lower()
+
+    if colour in [0,91,92,93,96,94,95]:
+        pass
+    elif colour == "red":
+        colour = "91"
+    elif colour == "green":
+        colour = "92"
+    elif colour == "yellow":
+        colour = "93"
+    elif colour == "cyan":
+        colour = "96"
+    elif colour == "blue":
+        colour = "94"
+    elif colour == "pink":
+        colour = "95"
+    else:
+        colour = "0"
+
+    menu_width = 50
 
     new_list = []
 
+    # Split the lines if they are longer than 74 characters.
+
     for item in menu_list:
-        words = []
         line = ""
         words = item.split(" ")
 
         for word in words:
 
-            word = word.replace("\t", "    ")
+            word = word.replace("\t", "   ")
 
-
-            if len(line) < 70:
+            if len(line+word) < 75:
                 line += word + " "
             else:
                 new_list.append(line)
-                line = "\t"*5 + " " + word + " "
-            line = line.replace("\t", "    ")
-        
+                line = word + " "
+
         new_list.append(line)
 
-    #max_width = max(max_width, title_width)
-
     menu_list = new_list
+
+    # Create the frame.
 
     max_width = max([(len(i)+4) for i in menu_list])
 
@@ -53,7 +79,7 @@ def frame(menu_list):
 
     or_line = "═" * menu_width
     filling = " " * menu_width
-    display_menu = "\n╔" + or_line + "╗\n"
+    display_menu = f"\033[{colour}m" + "╔" + or_line + "╗\n"
     display_menu += "║" + filling + "║\n"
 
     for item in menu_list:
@@ -64,10 +90,15 @@ def frame(menu_list):
 
     filling = " " * menu_width
     display_menu += "║" + filling + "║\n"
-    display_menu += "╚" + or_line + "╝\n"
+    display_menu += "╚" + or_line + "╝\033[0m\n"
 
-    return display_menu
+    # Change the behaviour of the function from 'print' to 'input'.
 
+    if window=="in" or window=="input":
+        return input(display_menu)
+    else:
+        print(display_menu)
 
 if __name__ == "__main__":
     main()
+    

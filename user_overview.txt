@@ -1,0 +1,14 @@
+							 User Overview
+
+Total number of users: 9
+Total number of tasks: 14
+
+Number of tasks for admin ··········· :    7    Percent of the total tasks:  50.00%    Completed: 100.00%    Incomplete:   0.00%    Overdue:   0.00%
+Number of tasks for user1 ··········· :    1    Percent of the total tasks:   7.14%    Completed:   0.00%    Incomplete: 100.00%    Overdue: 100.00%
+Number of tasks for user2 ··········· :    1    Percent of the total tasks:   7.14%    Completed:   0.00%    Incomplete: 100.00%    Overdue: 100.00%
+Number of tasks for user3 ··········· :    2    Percent of the total tasks:  14.29%    Completed:   0.00%    Incomplete: 100.00%    Overdue: 100.00%
+Number of tasks for detchen ········· :    1    Percent of the total tasks:   7.14%    Completed:   0.00%    Incomplete: 100.00%    Overdue: 100.00%
+Number of tasks for user4 ··········· :    1    Percent of the total tasks:   7.14%    Completed:   0.00%    Incomplete: 100.00%    Overdue: 100.00%
+Number of tasks for user5 ··········· :    0    Percent of the total tasks:   0.00%    Completed:     N/A    Incomplete:     N/A    Overdue:     N/A
+Number of tasks for user6 ··········· :    0    Percent of the total tasks:   0.00%    Completed:     N/A    Incomplete:     N/A    Overdue:     N/A
+Number of tasks for user7 ··········· :    1    Percent of the total tasks:   7.14%    Completed:   0.00%    Incomplete: 100.00%    Overdue: 100.00%

@@ -8,5 +8,7 @@ admin, Ask for code review, Go to the Dashboard and ask one of the reviewer to c
 detchen, check my tasks, use task manager to check my tasks, 09 Jan 2023, 10 Jan 2023, No, 
 user4, try4, testing if user 4 is recorded, 14 Jan 2023, 16 Jan 2023, No, 
 admin, git, create a new repository, 15 Jan 2023, 16 Jan 2023, Yes, 
-admin, add reports, add function to generate reports, 16 Jan 2023, 20 Jan 2023, No
-admin, add display statistics, add function to display statistics, 16 Jan 2023, 20 Jan 2023, No
+admin, add reports, add function to generate reports, 16 Jan 2023, 20 Jan 2023, Yes, 
+admin, add display statistics, add function to display statistics, 16 Jan 2023, 20 Jan 2023, Yes, 
+user7, continue, continue editing task master, 19 Jan 2023, 20 Jan 2023, No, 
+user3, task for user3, new task for user3, 20 Jan 2023, 20 Jan 2023, No
