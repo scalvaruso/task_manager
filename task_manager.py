@@ -1,11 +1,12 @@
 # ========== importing libraries ==========
 
+import math
 import os
 from datetime import datetime
 
 # ******************************   NOTE   ******************************
 # The following module is an additional program to print frames
-# around input prompts and output.
+# around input prompts and output results.
 # 
 # Please copy the file 'borders.py' in the same folder of 'task_manager.py'.
 # **********************************************************************
@@ -48,7 +49,8 @@ def main():
         col = 0
 
     os.system("clear")
-    frame([f"\t\t\tWelcome {user_id}"], colour=col)
+    space = " " * math.floor((42-len(user_id))/2)
+    frame([f"{space}Welcome {user_id}"], colour=col)
 
     # Present the options menu to the user.
 
@@ -59,24 +61,20 @@ def main():
         # Execute the function corresponding to the selected option.
 
         if menu == "r" and admin:
-            
             os.system("clear")
             users = reg_user(users)
-            pass
 
         elif menu == "a":
-            
             os.system("clear")
             tasks = add_task(users, tasks)
-            pass
 
         elif menu == "va":
-            
-            view_all(tasks)
-            pass
+            os.system("clear")
+            for key in tasks.keys():
+                frame(view_all(tasks, key))
 
         elif menu == "vm":
-
+            os.system("clear")
             check = True  # Variable to check if the tasks should be printed or not.
 
             # Edit menu.
@@ -100,7 +98,6 @@ def main():
                     "\t-1\t  - to go back to previous menu",
                     ], window="in"))
 
-
                 if choice == -1:
                     break
 
@@ -110,11 +107,10 @@ def main():
                     frame(["Sorry you cannot select others tasks."])
                     check = False
                     pass
+
                 else:
                     check = edit_task(tasks, users, (choice))
-                    
-            pass
-        
+
         elif menu == "gr" and admin:
             
             os.system("clear")
@@ -128,7 +124,7 @@ def main():
         elif menu == "ds" and admin:
             
             os.system("clear")
-            display_statistics(users, tasks)
+            frame(display_statistics(users, tasks))
             
             pass
 
@@ -282,7 +278,7 @@ def reg_user(old_users):
         users_append.write(f"\n{new_user}, {new_password}")
     
     os.system("clear")
-    frame(["New user successfully recorded!"])
+    frame(["New user successfully recorded!"], colour="green")
 
     return old_users
 
@@ -335,51 +331,50 @@ def vali_date(message):
 
 # Format and print all the tasks recorded.
 
-def view_all(tasks):
-    os.system("clear")
+def view_all(tasks, key):
 
-    for key in tasks.keys():
+    print_tasks = [f"Task number ······ :\t{key}"]
+    print_tasks.append(f"User ············· :\t{tasks[key][0]}")
+    print_tasks.append(f"Task ············· :\t{tasks[key][1]}")
 
-        print_tasks = [f"Task number:\t\t  {key}"]
-        print_tasks.append(f"User:\t\t\t\t\t{tasks[key][0]}")
-        print_tasks.append(f"Task:\t\t\t\t\t{tasks[key][1]}")
+    description_line = (f"Description ······ :\t{tasks[key][2]}").strip("\n")
+    description = ""
+    words = description_line.split(" ")
 
-        description_line = (f"Description:\t\t{tasks[key][2]}").strip("\n")
-        description = ""
-        words = description_line.split(" ")
+    # Splits lines wider than 70 characters 
 
-        for word in words:
-            word = word.replace("\t", "    ")
+    for word in words:
+        word = word.replace("\t", "    ")
 
-            if len(description+word) < 74:
-                description += word + " "
-            else:
-                print_tasks.append(description)
-                description = "\t"*5 + word + " "
+        if len(description+word) < 71:
+            description += word + " "
+        else:
+            print_tasks.append(description)
+            description = "\t"*6 + word + " "
 
-            description = description.replace("\t", "    ")
+        description = description.replace("\t", "    ")
 
-        print_tasks.append(description)
-        print_tasks.append(f"Date assignement:\t{tasks[key][3]}")
-        print_tasks.append(f"Due Date:\t\t\t  {tasks[key][4]}")
-        print_tasks.append(f"Task completed:\t  {tasks[key][5]}")
+    print_tasks.append(description)
+    print_tasks.append(f"Date assignement · :\t{tasks[key][3]}")
+    print_tasks.append(f"Due Date ········· :\t{tasks[key][4]}")
+    print_tasks.append(f"Task completed ··· :\t{tasks[key][5]}")
         
-        frame(print_tasks)
+    return print_tasks
 
 
 # Print all the tasks recorded for the user logged in.
 
 def view_mine(id, tasks):
-    my_tasks = {}
     my_keys = []
+
     for key in tasks.keys():
+
         if id == tasks[key][0]:
-            my_tasks.update({key: tasks[key]})
+            frame(view_all(tasks, key))
             my_keys.append(key)
         else:
             pass
 
-    view_all(my_tasks)
     return my_keys
 
 
@@ -425,6 +420,7 @@ def edit_task(tasks_for_edit, users_for_edit, to_edit):
 
             tasks_for_edit[to_edit][5] = "Yes"
             write_to_file(tasks_for_edit)
+            frame([f"Task {to_edit} marked as completed!"], colour="green")
             return False
 
         # Change the due date.
@@ -434,6 +430,7 @@ def edit_task(tasks_for_edit, users_for_edit, to_edit):
             new_due = vali_date(["Enter a new due date in the format (DD Mmm YYYY)"])
             tasks_for_edit[to_edit][4] = new_due
             write_to_file(tasks_for_edit)
+            frame([f"New due date for task {to_edit} is: {new_due}"], colour="green")
             return False
         
         # Change the user for the selected task.
@@ -443,6 +440,7 @@ def edit_task(tasks_for_edit, users_for_edit, to_edit):
             new_user = valid_user(users_for_edit)
             tasks_for_edit[to_edit][0] = new_user
             write_to_file(tasks_for_edit)
+            frame([f"Task {to_edit} assigned to: {new_user}"], colour="green")
             return True
 
 
@@ -514,24 +512,24 @@ def tasks_stats(tasks_list):
                 tot_overdue += 1
             tot_incomplete += 1
 
-    # Calculate percentage of incomplete tasks.
+    # Calculate Percent of incomplete tasks.
 
     perc_incomplete = tot_incomplete/total_tasks * 100
 
-    # Calculate percentage of overdue tasks.
+    # Calculate Percent of overdue tasks.
 
     perc_overdue = tot_overdue/total_tasks * 100
 
     # Save results.
 
-    to_write = ["\t\t\t\t\t\t\t Task Overview",
+    to_write = ["\t\t\t\t   Task Overview",
         "",
         f"Total tasks: {total_tasks}",
         f"Completed tasks: {tot_completed}",
         f"Incomplete tasks: {tot_incomplete}",
         f"Overdue tasks: {tot_overdue}",
-        f"Percentage of incomplete tasks: {perc_incomplete:.2f}%",
-        f"Percentage of overdue tasks: {perc_overdue:.2f}%",
+        f"Percent of incomplete tasks: {perc_incomplete:.2f}%",
+        f"Percent of overdue tasks: {perc_overdue:.2f}%",
     ]
 
     with open("task_overview.txt", "w+", encoding="utf-8") as write_stats:
@@ -551,7 +549,7 @@ def user_stats(users_list, tasks_list):
 
     total_tasks = len(tasks_list.keys())
     
-    to_write = ["\t\t\t\t\t\t\t User Overview",
+    to_write = ["\t\t\t\t   User Overview",
         "",
         f"Total number of users: {total_users}",
         f"Total number of tasks: {total_tasks}",
@@ -584,7 +582,7 @@ def user_stats(users_list, tasks_list):
                     if overdue(tasks_list[pos][4]):
                         usr_overdue += 1
 
-        # Calculate percentage of tasks assigned to the user.
+        # Calculate Percent of tasks assigned to the user.
 
         usr_perc = f"{(usr_tasks/total_tasks * 100):.2f}%"
 
@@ -596,15 +594,15 @@ def user_stats(users_list, tasks_list):
 
         else:
    
-            # Calculate percentage of completed tasks.
+            # Calculate Percent of completed tasks.
 
             usr_comp_perc = f"{(usr_completed/usr_tasks * 100):.2f}%"
 
-            # Calculate percentage of uncompleted tasks.
+            # Calculate Percent of uncompleted tasks.
 
             usr_incomp_perc = f"{(usr_incomplete/usr_tasks * 100):.2f}%"
 
-            # Calculate percentage of uncompleted and overdue tasks.
+            # Calculate Percent of uncompleted and overdue tasks.
 
             usr_over_perc = f"{(usr_overdue/usr_tasks * 100):.2f}%"
 
@@ -618,7 +616,7 @@ def user_stats(users_list, tasks_list):
         space_operc = " " * (8 - len(usr_over_perc))
 
         output = f"Number of tasks for {user} {space_usr} :{space_tot}{usr_tasks}"
-        output += f"    Percent of the total tasks:{space_tperc}{usr_perc}"
+        output += f"    Percent of    Total tasks:{space_tperc}{usr_perc}"
         output += f"    Completed:{space_cperc}{usr_comp_perc}"
         output += f"    Incomplete:{space_iperc}{usr_incomp_perc}"
         output += f"    Overdue:{space_operc}{usr_over_perc}"
@@ -655,26 +653,29 @@ def display_statistics(users, tasks):
     # If the file does not exist, it execute the function to generate the file.
 
     while True:
+        
         try:
+
             with open("task_overview.txt", "r", encoding="utf-8") as task_overview:
                 
                 for line in task_overview:
-
                     line = line.strip("\n")
 
                     if line[-8:]=="Overview" or line=="":
-
                         overview_print.append(line)
                     else:
                         text, val = line.split(": ")
                         space1 = "·" * (36 - len(text.strip(" ")))
-                        space2 = " " * (8 - len(val.strip(" ")))
+                        space2 = " " * (7 - len(val.strip(" ")))
+
                         if val[-1] == "%":
                             space2 += "    "
+
                         line = text + " " + space1 + " :" + space2 + val
                         overview_print.append(line)
 
             break
+
         except FileNotFoundError:
             tasks_stats(tasks)
 
@@ -685,26 +686,24 @@ def display_statistics(users, tasks):
     # If the file does not exist, it execute the function to generate the file.
 
     while True:
+        
         try:
+            
             with open("user_overview.txt", "r", encoding="utf-8") as user_overview:
                 
                 for line in user_overview:
-                    
                     line = line.strip("\n")
 
                     if line[0:5] == "Total":
-
                         text, val = line.split(": ")
                         space1 = "·" * (36 - len(text.strip(" ")))
-                        space2 = " " * (8 - len(val.strip(" ")))
+                        space2 = " " * (7 - len(val.strip(" ")))
                         line = text + " " + space1 + " :" + space2 + val
                         overview_print.append(line)
 
                     elif line[0:6] == "Number":
-                        
                         overview_print.append("")
-
-                        line0, split1 = line.strip(" ").split("Percent of the total tasks:")
+                        line0, split1 = line.strip(" ").split("Percent of    Total tasks:")
                         val2, split2 = split1.strip(" ").split("Completed:")
                         val3, split3 = split2.strip(" ").split("Incomplete:")
                         val4, split4 = split3.strip(" ").split("Overdue:")
@@ -713,17 +712,20 @@ def display_statistics(users, tasks):
                         line1a = line1a.replace("·","")
                         val1 = val1.strip(" ")
                         space0 = "·" * (37 - len(line1a))
-                        space1 = " " * (8 - len(val1))
+                        space1 = " " * (7 - len(val1))
                         line1 = line1a + space0 + " :" + space1 + val1
-                        space2 = " " * (12 - len(val2.strip(" ")))
-                        line2 = "Percent of the total tasks: " + "·"*9 + " :" + space2 + val2
-                        space3 = " " * (12 - len(val3.strip(" ")))
-                        line3 = "Tasks completed " + "·"*21 + " :" + space3 + val3
-                        space4 = " " * (12 - len(val4.strip(" ")))
-                        line4 = "Tasks incomplete " + "·"*20 + " :" + space4 + val4
-                        space5 = " " * (12 - len(val5))
-                        line5 = "Tasks overdue " + "·"*23 + " :" + space5 + val5
-                      
+                        val2 = val2.strip(" ")
+                        space2 = " " * (11 - len(val2))
+                        line2 = "Percent of total tasks " + "·"*14 + " :" + space2 + val2
+                        val3 = val3.strip(" ")
+                        space3 = " " * (11 - len(val3))
+                        line3 = "Percent of Completed Tasks " + "·"*10 + " :" + space3 + val3
+                        val4 = val4.strip(" ")
+                        space4 = " " * (11 - len(val4))
+                        line4 = "Percent of Incomplete Tasks " + "·"*9 + " :" + space4 + val4
+                        val5 = val5.strip(" ")
+                        space5 = " " * (11 - len(val5))
+                        line5 = "Percent of Overdue Tasks " + "·"*12 + " :" + space5 + val5
                         overview_print.append(line1)
                         overview_print.append(line2)
                         overview_print.append(line3)
@@ -734,12 +736,13 @@ def display_statistics(users, tasks):
                         overview_print.append(line)
 
             break
+
         except FileNotFoundError:
-            tasks_stats(users)
+            user_stats(users, tasks)
 
-    # Print the statistics.
+    # Return the print out of statistics.
 
-    frame(overview_print)
+    return overview_print
 
 
 if __name__ == "__main__":
