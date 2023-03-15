@@ -1,16 +1,13 @@
+# ************************************************************
+# ********** * Program created by Simon Calvaruso * **********
+# ************************************************************
+
+
 # ========== importing libraries ==========
 
 import math
 import os
 from datetime import datetime
-
-# ******************************   NOTE   ******************************
-# The following module is an additional program to print frames
-# around input prompts and output results.
-# 
-# Please copy the file 'borders.py' in the same folder of 'task_manager.py'.
-# **********************************************************************
-
 from borders import frame
 
 
