@@ -41,7 +41,7 @@ def main():
     user_id, admin = login(users)
 
     if admin:
-        col = 93
+        col = "Red"
     else:
         col = 0
 
@@ -50,13 +50,13 @@ def main():
     space = ""
     space = " " * math.floor((32-len(user_id))/2)
     
-    frame([f"{space}Welcome {user_id}"], colour=col, min_width=48)
+    frame([f"{space}Welcome {user_id}"], frame_colour="Green", min_width=48)
 
     # Present the options menu to the user.
 
     while True:
 
-        menu = frame(entry_menu(admin), colour=col, window="in").lower()
+        menu = frame(entry_menu(admin), frame_colour=col, window="in").lower()
         
         # Execute the function corresponding to the selected option.
 
@@ -104,7 +104,7 @@ def main():
                 # Proceed to the edit menu only if the task selected belong to the user logged in.
 
                 elif choice not in my_keys:
-                    frame(["Sorry you cannot select others tasks."])
+                    frame(["Sorry you cannot select others tasks."], frame_colour="Bright Red")
                     check = False
                     pass
 
@@ -116,7 +116,7 @@ def main():
             os.system("clear")
             tasks_stats(tasks)
             user_stats(users, tasks)
-            frame(["Statistics successfully saved to:","","'task_overview.txt' and 'user_overview.txt'"], colour="green")
+            frame(["Statistics successfully saved to:","","'task_overview.txt' and 'user_overview.txt'"], colour="Bright Green")
 
 
             pass
@@ -137,7 +137,7 @@ def main():
         else:
             
             os.system("clear")
-            frame(["Sorry","The option selected is not valid.","Please Try again"])
+            frame(["Sorry","The option selected is not valid.","Please Try again"], frame_colour="Bright Red")
 
 
 # ==================== Login function ====================
@@ -154,8 +154,9 @@ def login(login):
     
     retry = 10
     col = 0
+    fr_col = 0
     while True:
-        id = frame(message, colour=col, window="in")
+        id = frame(message, colour=col, frame_colour=fr_col, window="in")
         
         # Check if user is registered.
 
@@ -169,13 +170,16 @@ def login(login):
         if retry > 0:
             os.system("clear")
 
-            if retry == 1:
+            if 1 < retry < 6:
+                col = "Bright Yellow"
+            elif retry == 1:
                 col = 91
             message = [f"Sorry, '{id}' is not a valid ID!",f"{retry} more logon attempts left","","Please enter a valid ID"]
+            fr_col = "Bright Red"
             continue
         else:
             os.system("clear")
-            frame(["Sorry, You have reached the maximum logon attempts!","Please, try again later."])
+            frame(["Sorry, You have reached the maximum logon attempts!","Please, try again later."], frame_colour=fr_col)
             exit()
 
     # Ask the user for their password.
@@ -186,7 +190,7 @@ def login(login):
     retry = 3
     col = 0
     while True:
-        user_pw = frame(message, colour=col, window="in")
+        user_pw = frame(message, colour=col, frame_colour=fr_col, window="in")
 
         # Check validity of password.
 
@@ -201,14 +205,17 @@ def login(login):
 
         if retry > 0:
             os.system("clear")
-    
+            col = "Bright Yellow"
+
             if retry == 1:
                 col = 91
             message = ["Incorrect Password!","",f"{retry} more logon attempts left.","Please enter a valid Password"]
+            fr_col = "Bright Red"
             continue
+
         else:
             os.system("clear")
-            frame(["Sorry, You have reached the maximum logon attempts!","Please, try again later."])
+            frame(["Sorry, You have reached the maximum logon attempts!","Please, try again later."], frame_colour=fr_col)
             exit()
 
     return id, admin
@@ -221,7 +228,7 @@ def entry_menu(extended):
     menu_options = ["Please, select one of the options below:",""]
 
     if extended:
-        menu_options.append("r  - Registering a user")
+        menu_options.append(("r  - Registering a user","Red"))
     else:
         menu_options.append("")
     menu_options.append("a  - Adding a task")
@@ -229,9 +236,10 @@ def entry_menu(extended):
     menu_options.append("vm - View my task")
 
     if extended:
-        menu_options.append("gr - Generate Reports")
-        menu_options.append("ds - Display Statistics")
+        menu_options.append(("gr - Generate Reports","Red"))
+        menu_options.append(("ds - Display Statistics","Red"))
     else:
+        menu_options.append("")
         menu_options.append("")
         
     menu_options.append("e  - Exit")
