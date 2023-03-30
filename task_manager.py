@@ -46,8 +46,11 @@ def main():
         col = 0
 
     os.system("clear")
-    space = " " * math.floor((42-len(user_id))/2)
-    frame([f"{space}Welcome {user_id}"], colour=col)
+    
+    space = ""
+    space = " " * math.floor((32-len(user_id))/2)
+    
+    frame([f"{space}Welcome {user_id}"], colour=col, min_width=48)
 
     # Present the options menu to the user.
 
