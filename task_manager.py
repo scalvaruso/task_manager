@@ -233,7 +233,7 @@ def entry_menu(extended):
         menu_options.append("")
     menu_options.append("a  - Adding a task")
     menu_options.append("va - View all tasks")
-    menu_options.append("vm - View my task")
+    menu_options.append("vm - View my tasks")
 
     if extended:
         menu_options.append(("gr - Generate Reports","Red"))
@@ -530,7 +530,7 @@ def tasks_stats(tasks_list):
 
     # Save results.
 
-    to_write = ["\t\t\t\t   Task Overview",
+    to_write = ["\t\t\t\t  Tasks Overview",
         "",
         f"Total tasks: {total_tasks}",
         f"Completed tasks: {tot_completed}",
@@ -557,7 +557,7 @@ def user_stats(users_list, tasks_list):
 
     total_tasks = len(tasks_list.keys())
     
-    to_write = ["\t\t\t\t   User Overview",
+    to_write = ["\t\t\t\t  Users Overview",
         "",
         f"Total number of users: {total_users}",
         f"Total number of tasks: {total_tasks}",
