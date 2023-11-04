@@ -9,6 +9,13 @@ import math
 import os
 from datetime import datetime
 from borders import frame
+import platform
+
+# Fixing compatibility errors for command 'os.system("clear")'
+if platform.system() == "Windows":
+    CLEAR = "cls"
+else:
+    CLEAR = "clear"
 
 
 # Main function.
@@ -45,7 +52,7 @@ def main():
     else:
         col = 0
 
-    os.system("clear")
+    os.system(CLEAR)
     
     space = ""
     space = " " * math.floor((32-len(user_id))/2)
@@ -61,20 +68,20 @@ def main():
         # Execute the function corresponding to the selected option.
 
         if menu == "r" and admin:
-            os.system("clear")
+            os.system(CLEAR)
             users = reg_user(users)
 
         elif menu == "a":
-            os.system("clear")
+            os.system(CLEAR)
             tasks = add_task(users, tasks)
 
         elif menu == "va":
-            os.system("clear")
+            os.system(CLEAR)
             for key in tasks.keys():
                 frame(view_all(tasks, key))
 
         elif menu == "vm":
-            os.system("clear")
+            os.system(CLEAR)
             check = True  # Variable to check if the tasks should be printed or not.
 
             # Edit menu.
@@ -113,7 +120,7 @@ def main():
 
         elif menu == "gr" and admin:
             
-            os.system("clear")
+            os.system(CLEAR)
             tasks_stats(tasks)
             user_stats(users, tasks)
             frame(["Statistics successfully saved to:","","'task_overview.txt' and 'user_overview.txt'"], colour="Bright Green")
@@ -123,20 +130,20 @@ def main():
 
         elif menu == "ds" and admin:
             
-            os.system("clear")
+            os.system(CLEAR)
             frame(display_statistics(users, tasks))
             
             pass
 
         elif menu == "e":
             
-            os.system("clear")
+            os.system(CLEAR)
             frame(["Thank you for using Task Manager.","","Goodbye!!!"], colour="cyan")
             exit()
 
         else:
             
-            os.system("clear")
+            os.system(CLEAR)
             frame(["Sorry","The option selected is not valid.","Please Try again"], frame_colour="Bright Red")
 
 
@@ -147,7 +154,7 @@ def main():
 
 def login(login):
 
-    os.system("clear")
+    os.system(CLEAR)
     message = ["Enter your ID"]
 
     # Ask the user for their ID.
@@ -168,7 +175,7 @@ def login(login):
         retry -= 1
         
         if retry > 0:
-            os.system("clear")
+            os.system(CLEAR)
 
             if 1 < retry < 6:
                 col = "Bright Yellow"
@@ -178,7 +185,7 @@ def login(login):
             fr_col = "Bright Red"
             continue
         else:
-            os.system("clear")
+            os.system(CLEAR)
             frame(["Sorry, You have reached the maximum logon attempts!","Please, try again later."], frame_colour=fr_col)
             exit()
 
@@ -204,7 +211,7 @@ def login(login):
         retry -= 1
 
         if retry > 0:
-            os.system("clear")
+            os.system(CLEAR)
             col = "Bright Yellow"
 
             if retry == 1:
@@ -214,7 +221,7 @@ def login(login):
             continue
 
         else:
-            os.system("clear")
+            os.system(CLEAR)
             frame(["Sorry, You have reached the maximum logon attempts!","Please, try again later."], frame_colour=fr_col)
             exit()
 
@@ -257,13 +264,13 @@ def reg_user(old_users):
         new_user = frame(["Please, enter a new user"], window="in")
 
         if new_user in old_users.keys():
-            os.system("clear")
+            os.system(CLEAR)
             frame([f"The name '{new_user}' is already existing."])
             continue
         else:
             break
     
-    os.system("clear")
+    os.system(CLEAR)
 
     # Ask for a valid password.
 
@@ -274,7 +281,7 @@ def reg_user(old_users):
         if new_password == pw_confirmation:
             break
         else:
-            os.system("clear")
+            os.system(CLEAR)
             frame(["The passwords do not match!"])
 
     # Update the variable containing the users and passwords
@@ -285,7 +292,7 @@ def reg_user(old_users):
     with open("user.txt", "a", encoding="utf-8") as users_append:
         users_append.write(f"\n{new_user}, {new_password}")
     
-    os.system("clear")
+    os.system(CLEAR)
     frame(["New user successfully recorded!"], colour="green")
 
     return old_users
@@ -317,7 +324,7 @@ def add_task(users, old_tasks):
     with open("tasks.txt", "a", encoding="utf-8") as tasks_append:
         tasks_append.write(f"\n{user_task}, {new_task}, {description}, {assignment_date}, {due_date}, No")
     
-    os.system("clear")
+    os.system(CLEAR)
     frame(["New task successfully recorded!"], colour="green")
 
     return old_tasks
@@ -485,7 +492,7 @@ def valid_user(existing_users):
         if new_user in existing_users.keys():
             break
         else:
-            os.system("clear")
+            os.system(CLEAR)
             frame(["The user you selected does not exist."])
             continue
     
