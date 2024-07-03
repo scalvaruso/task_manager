@@ -1,6 +1,10 @@
-# ************************************************************
-# ********** * Program created by Simon Calvaruso * **********
-# ************************************************************
+# *************************************************************
+# ********** * * * * * * * * * * * * * * * * * * * * **********
+# ********** * Program created by Simon Calvaruso  * **********
+# ********** * HyperionDev - Task 26               * **********
+# ********** * Capstone Project III                * **********
+# ********** * * * * * * * * * * * * * * * * * * * * **********
+# *************************************************************
 
 
 # ========== importing libraries ==========
@@ -25,23 +29,50 @@ def main():
     # Read the existing Users.
 
     users = {}
+    try:
+        with open("users.txt", "r", encoding="utf-8") as users_read:
+            
+            for line in users_read:
+                name, password = line.split(", ")
+                users.update({name: password.strip("\n")})
+            if len(users) < 1:
+                raise ValueError
 
-    with open("user.txt", "r", encoding="utf-8") as users_read:
-        
-        for line in users_read:
-            name, password = line.split(", ")
-            users.update({name: password.strip("\n")})
+    except:
+        default_user = "admin"
+        default_password = "admin"
+        users.update({default_user: default_password})
+    
+        with open("users.txt", "a", encoding="utf-8") as users_append:
+            users_append.write(f"{default_user}, {default_password}")
 
     # Read the existing Tasks.
 
     tasks = {}
+    try:
+        with open("tasks.txt", "r", encoding="utf-8") as tasks_read:
 
-    with open("tasks.txt", "r", encoding="utf-8") as tasks_read:
+            for pos, line in enumerate(tasks_read, 1):
+                line_split = line.split(", ")
+                line_split[-1] = line_split[-1].strip("\n")
+                tasks.update({pos: line_split[0:]})
 
-        for pos, line in enumerate(tasks_read, 1):
-            line_split = line.split(", ")
-            line_split[-1] = line_split[-1].strip("\n")
-            tasks.update({pos: line_split[0:]})
+        if pos < 1:
+            raise ValueError
+
+    except:
+        user_task = "admin"
+        new_task = "First Tasks"
+        description = "Initiating tasks.txt file"
+        assignment_date = datetime.today().strftime("%d %b %Y")
+        due_date = datetime.today().strftime("%d %b %Y")
+        completed = "Yes"
+        new_task_data = [user_task, new_task, description, assignment_date, due_date, completed]
+        task_num = len(tasks.keys())
+        tasks.update({(task_num+1): new_task_data})
+
+        with open("tasks.txt", "a", encoding="utf-8") as tasks_append:
+            tasks_append.write(f"{user_task}, {new_task}, {description}, {assignment_date}, {due_date}, {completed}")
 
     # Login the user.
 
@@ -124,7 +155,6 @@ def main():
             tasks_stats(tasks)
             user_stats(users, tasks)
             frame(["Statistics successfully saved to:","","'task_overview.txt' and 'user_overview.txt'"], colour="Bright Green")
-
 
             pass
 
@@ -285,11 +315,11 @@ def reg_user(old_users):
             frame(["The passwords do not match!"])
 
     # Update the variable containing the users and passwords
-    # and write to the file 'user.txt'.
+    # and write to the file 'users.txt'.
 
     old_users.update({new_user: new_password})
     
-    with open("user.txt", "a", encoding="utf-8") as users_append:
+    with open("users.txt", "a", encoding="utf-8") as users_append:
         users_append.write(f"\n{new_user}, {new_password}")
     
     os.system(CLEAR)
