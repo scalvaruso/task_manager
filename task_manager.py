@@ -9,11 +9,13 @@
 
 # ========== importing libraries ==========
 
+from borders import frame
+import ctypes
+from datetime import datetime
 import math
 import os
-from datetime import datetime
-from borders import frame
 import platform
+
 
 # Fixing compatibility errors for command 'os.system("clear")'
 if platform.system() == "Windows":
@@ -33,18 +35,19 @@ def main():
         with open("users.txt", "r", encoding="utf-8") as users_read:
             
             for line in users_read:
-                name, password = line.split(", ")
-                users.update({name: password.strip("\n")})
+                name, group, password = line.split(", ")
+                users.update({name: (group, password.strip("\n"))})
             if len(users) < 1:
                 raise ValueError
 
     except:
         default_user = "admin"
-        default_password = "admin"
-        users.update({default_user: default_password})
+        default_group = htd_encode("root", default_user)
+        default_password = htd_encode(default_user, default_user)
+        users.update({default_user: (default_group, default_password)})
     
         with open("users.txt", "a", encoding="utf-8") as users_append:
-            users_append.write(f"{default_user}, {default_password}")
+            users_append.write(f"{default_user}, {default_group}, {default_password}")
 
     # Read the existing Tasks.
 
@@ -221,19 +224,22 @@ def login(login):
 
     # Ask the user for their password.
 
-    admin = False
     message = ["Enter your Password"]
 
     retry = 3
     col = 0
+    admin = False
+
     while True:
         user_pw = frame(message, colour=col, frame_colour=fr_col, window="in")
 
         # Check validity of password.
 
-        if user_pw == login[id]:
-            if id == "admin":
+        if htd_encode(user_pw, id) == login[id][1]:
+            if login[id][0] == htd_encode("root", id):
                 admin = True
+            else:
+                admin = False
             break
         
         # Retry count for passwords.
@@ -299,6 +305,11 @@ def reg_user(old_users):
             continue
         else:
             break
+
+    # Ask if the new user should be added to the admin group
+    group = htd_encode("user",new_user)
+    # To be implemented
+    ...
     
     os.system(CLEAR)
 
@@ -310,19 +321,24 @@ def reg_user(old_users):
 
         if new_password == pw_confirmation:
             break
+
+        # add check for empty passwords, also to taskmaster.py
+
         else:
-            os.system(CLEAR)
+            os.system("clear")
             frame(["The passwords do not match!"])
+
+    new_password = htd_encode(new_password, new_user)
 
     # Update the variable containing the users and passwords
     # and write to the file 'users.txt'.
-
-    old_users.update({new_user: new_password})
+    
+    old_users.update({new_user: (group, new_password)})
     
     with open("users.txt", "a", encoding="utf-8") as users_append:
-        users_append.write(f"\n{new_user}, {new_password}")
+        users_append.write(f"\n{new_user}, {group}, {new_password}")
     
-    os.system(CLEAR)
+    os.system("clear")
     frame(["New user successfully recorded!"], colour="green")
 
     return old_users
@@ -788,6 +804,20 @@ def display_statistics(users, tasks):
     # Return the print out of statistics.
 
     return overview_print
+
+
+def htd_encode(raw_pw, encif=""):
+
+    # Load the shared library
+    lib = ctypes.CDLL(os.path.abspath("encode.so"))
+    # Define the argument and return types of the encode function
+    lib.encode.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+    lib.encode.restype = ctypes.c_char_p
+
+    raw_pw_bytes = raw_pw.encode('utf-8')
+    encif_bytes = encif.encode('utf-8')
+    result = lib.encode(ctypes.c_char_p(raw_pw_bytes), ctypes.c_char_p(encif_bytes))
+    return result.decode('utf-8')
 
 
 if __name__ == "__main__":
