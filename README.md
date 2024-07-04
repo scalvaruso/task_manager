@@ -95,6 +95,7 @@ If you'd like to contribute to this project, please follow these steps:
 
 ## License
 
-![GitHub License](https://img.shields.io/github/license/scalvaruso/task_manager?color=blue)
+![GitHub License](https://img.shields.io/github/license/scalvaruso/task_manager?color=blue&link=https://github.com/scalvaruso/task_manager/blob/main/LICENSE.md)
+
 
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/scalvaruso/task_manager/blob/main/LICENSE.md) file for details.
