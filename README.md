@@ -12,13 +12,15 @@ Task Manager is a software solution for effective team coordination. Its primary
 - Main Menu
   - Registering a user <font color=red>(Admin only)</font>
     - Check for existing username
+    - Select new user's **group**
+    - Assign a password (at least 4 characters, different from username or usergroup)
   - Adding a task
     - Select user for the task
     - Enter task name
     - Enter task description
     - Enter a due date for the task
   - View all tasks<br>Shows all the tasks recorded
-  - View the logged user tasks<br>Shows all the task assigned to the logged user
+  - View the logged user tasks<br>Shows all the task assigned to the logged user (_only "admin" can change a completed task_)
     - Edit the task assigned to the user
     - Edit the due date of the task
     - Mark the task as complete
@@ -44,7 +46,11 @@ Task Manager is a software solution for effective team coordination. Its primary
 
 ---------------------------------------------------------------------------------------------
 
-<!-- ## Latest Version -->
+## Latest Version
+
+- Optimised code and added additional comments to improve readability
+- Added possibility to choose new user's group (_at the moment only groups accepted are "**root**" and "**user**"_)
+- Added length and "same name" checks for new user's password
 
 ## Table of Contents
 
