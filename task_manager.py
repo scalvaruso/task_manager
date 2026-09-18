@@ -10,11 +10,14 @@
 
 # ======================================== Importing Libraries ========================================
 from borders import frame
-import ctypes
+import bcrypt
 from datetime import datetime
+import hashlib
+import hmac
 import math
 import os
 import platform
+import secrets
 # from textlinebreaker import split_line # Implementation needed
 
 # Fixing compatibility errors for command 'os.system(CLEAR)'
@@ -44,6 +47,9 @@ def main():
         if menu == "r" and admin:
             os.system(CLEAR)
             users = reg_user(users)
+        elif menu == "cr" and admin:
+            os.system(CLEAR)
+            users = change_role(users)
         elif menu == "a":
             os.system(CLEAR)
             tasks = add_task(users, tasks)
@@ -107,22 +113,39 @@ def main():
 # Function to read users from the file "users.txt"
 def read_users():
     users = {}
+    tampered = []  # names whose role signature didn't match, for a warning
     # Try to read the users lists from "users.txt"
     try:
         with open("users.txt", "r", encoding="utf-8") as users_read:
             for line in users_read:
-                name, group, password = line.split(", ")
-                users[name] = (group, password.strip("\n"))
+                line = line.strip("\n")
+                if not line.strip():
+                    continue  # skip blank lines instead of crashing on them
+                name, group, password, signature = line.split(", ")
+                if not role_is_valid(name, group, signature):
+                    # The role field doesn't match its signature — someone
+                    # (or something) edited it outside the app. Don't trust
+                    # the elevated role; fall back to the safe default.
+                    tampered.append(name)
+                    group = "user"
+                users[name] = (group, password)
             if len(users) < 1:
-                raise ValueError
-    # If file does not exists or is empty initialise it with the default "admin" user
-    except:
+                raise ValueError("users.txt is empty")
+    # If the file does not exist or is empty, initialise it with the default "admin" user
+    except (FileNotFoundError, ValueError):
         default_user = "admin"
-        default_group = htd_encode("root", default_user)
-        default_password = htd_encode(default_user, default_user)
+        default_group = "admin"  # role is stored as plain text, not hashed
+        default_password = hash_value(default_user)
+        default_signature = sign_role(default_user, default_group)
         users[default_user] = (default_group, default_password)
-        with open("users.txt", "a", encoding="utf-8") as users_append:
-            users_append.write(f"{default_user}, {default_group}, {default_password}\n")
+        append_user_line(f"{default_user}, {default_group}, {default_password}, {default_signature}\n")
+
+    if tampered:
+        frame(
+            [f"Warning: role for '{name}' failed its integrity check and was reset to 'user'." for name in tampered],
+            frame_colour="Bright Red",
+        )
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
     return users
 
 
@@ -130,16 +153,19 @@ def read_users():
 def read_tasks():
     tasks = {}
     # Try to read the tasks lists from "tasks.txt"
+    pos = 0
     try:
         with open("tasks.txt", "r", encoding="utf-8") as tasks_read:
-            for pos, line in enumerate(tasks_read, 1):
-                line_split = line.split(", ")
-                line_split[-1] = line_split[-1].strip("\n")
-                tasks[pos] = line_split
+            for line in tasks_read:
+                line = line.strip("\n")
+                if not line.strip():
+                    continue  # skip blank lines instead of crashing on them
+                pos += 1
+                tasks[pos] = line.split(", ")
             if pos < 1:
-                raise ValueError
-    # If file does not exists or is empty initialise it with an initial task for user "admin"
-    except:
+                raise ValueError("tasks.txt is empty")
+    # If the file does not exist or is empty, initialise it with an initial task for user "admin"
+    except (FileNotFoundError, ValueError):
         user_task = "admin"
         new_task = "First Tasks"
         description = "Initiating tasks.txt file"
@@ -195,8 +221,8 @@ def login(login):
         user_pw = frame(message, colour=col, frame_colour=fr_col, window="in")
         print("\033[A\033[A") # NOTE This is to move cursor up one line
         # Check validity of password.
-        if htd_encode(user_pw, id) == login[id][1]:
-            admin = login[id][0] == htd_encode("root", id)
+        if verify_value(user_pw, login[id][1]):
+            admin = login[id][0] == "admin"  # role is stored as plain text
             break
         # Retry count for passwords.
         retry -= 1
@@ -227,10 +253,11 @@ def entry_menu(extended):
     if extended:
         menu_options.extend([
             ("gr - Generate Reports", "Red"),
-            ("ds - Display Statistics", "Red")
+            ("ds - Display Statistics", "Red"),
+            ("cr - Change a user's role", "Red")
         ])
     else:
-        menu_options.extend(["",""])
+        menu_options.extend(["","",""])
     menu_options.append("e  - Exit")
     return menu_options
 
@@ -251,13 +278,13 @@ def reg_user(old_users):
 
     # Ask if the new user should be added to the admin group
     while True:
-        new_user_group = frame([f"Please, enter {new_user}'s group: [user/admin]"], window="in")
+        new_user_group = frame([f"Please, enter {new_user}'s group: [user/admin]"], window="in").lower()
         print("\033[A\033[A") # NOTE This is to move cursor up one line
         if new_user_group in ["root", "admin"]:
-            group = htd_encode(new_user_group, new_user)
+            group = "admin"  # role is stored as plain text, not hashed
             break
         elif new_user_group == "user":
-            group = htd_encode(new_user_group, new_user)
+            group = "user"
             break
         else:
             os.system(CLEAR)
@@ -282,17 +309,66 @@ def reg_user(old_users):
             os.system(CLEAR)
             frame(["Password must be at least 4 characters long!", "Password cannot be the same as the user name or group!"], colour="red")
             print("\033[A\033[A") # NOTE This is to move cursor up one line
-    new_password = htd_encode(new_password, new_user)
+    new_password = hash_value(new_password)
 
     # Update the variable containing the users and passwords
     # and write to the file 'users.txt'.
     old_users[new_user] = (group, new_password)
-    with open("users.txt", "a", encoding="utf-8") as users_append:
-        users_append.write(f"\n{new_user}, {group}, {new_password}")
+    new_signature = sign_role(new_user, group)
+    append_user_line(f"{new_user}, {group}, {new_password}, {new_signature}\n")
     os.system(CLEAR)
     frame([f"User '{new_user}' successfully recorded!"], colour="green")
     print("\033[A\033[A") # NOTE This is to move cursor up one line
     return old_users
+
+
+# Rewrite the whole users.txt file from the in-memory users dict, signing
+# every role fresh. Used whenever an existing user's role changes, so the
+# stored signature always matches what's actually being granted.
+def write_users_to_file(users):
+    lines = []
+    for name, (group, password) in users.items():
+        signature = sign_role(name, group)
+        lines.append(f"{name}, {group}, {password}, {signature}")
+    with open("users.txt", "w", encoding="utf-8") as users_write:
+        users_write.write("\n".join(lines) + "\n")
+    try:
+        os.chmod("users.txt", 0o600)
+    except (AttributeError, NotImplementedError, OSError):
+        pass
+
+
+# Admin-only: change an existing user's role the proper, signed way,
+# instead of hand-editing users.txt (which the signature check would
+# always reject, by design - see role_is_valid()).
+def change_role(users):
+    while True:
+        target_user = frame(["Enter the user whose role you want to change"], window="in")
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
+        if target_user in users.keys():
+            break
+        os.system(CLEAR)
+        frame([f"The user '{target_user}' is not registered!"], frame_colour="Bright Red")
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
+    os.system(CLEAR)
+
+    while True:
+        new_group = frame([f"Enter {target_user}'s new role: [user/admin]"], window="in").lower()
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
+        if new_group in ("user", "admin", "root"):
+            new_group = "admin" if new_group in ("admin", "root") else "user"
+            break
+        os.system(CLEAR)
+        frame([f"The group '{new_group}' does not exist!"], colour="yellow")
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
+
+    password = users[target_user][1]
+    users[target_user] = (new_group, password)
+    write_users_to_file(users)
+    os.system(CLEAR)
+    frame([f"'{target_user}' role changed to: {new_group}"], colour="green")
+    print("\033[A\033[A") # NOTE This is to move cursor up one line
+    return users
 
 
 # Add a new task to an existing user.
@@ -312,7 +388,7 @@ def add_task(users, old_tasks):
     task_num = len(old_tasks.keys())
     old_tasks[task_num + 1] = new_task_data
     with open("tasks.txt", "a", encoding="utf-8") as tasks_append:
-        tasks_append.write(f"\n{user_task}, {new_task}, {description}, {assignment_date}, {due_date}, No")
+        tasks_append.write(f"{user_task}, {new_task}, {description}, {assignment_date}, {due_date}, No\n")
     os.system(CLEAR)
     frame(["New task successfully recorded!"], colour="green")
     return old_tasks
@@ -644,19 +720,15 @@ def display_statistics(users, tasks):
 
 # Write all the tasks to the txt file.
 def write_to_file(task_to_write, txt_out="tasks.txt"):
-    writefile = open(txt_out, "w+", encoding="utf-8")
-    to_write = ""
-    for item in range(1,(len(task_to_write)+1)):
-        if item > 1:
-            to_write = f"\n"
-        to_write += f"{task_to_write[item][0]}, "
-        to_write += f"{task_to_write[item][1]}, "
-        to_write += f"{task_to_write[item][2]}, "
-        to_write += f"{task_to_write[item][3]}, "
-        to_write += f"{task_to_write[item][4]}, "
-        to_write += f"{task_to_write[item][5]}, "
-        writefile.write(to_write)
-    writefile.close()
+    lines = []
+    for item in range(1, len(task_to_write) + 1):
+        task = task_to_write[item]
+        # NOTE: no trailing ", " after the last field — a trailing comma here
+        # used to leave an empty string in the "completed" (Yes/No) column
+        # every time a task was edited, silently breaking status checks.
+        lines.append(f"{task[0]}, {task[1]}, {task[2]}, {task[3]}, {task[4]}, {task[5]}")
+    with open(txt_out, "w", encoding="utf-8") as writefile:
+        writefile.write("\n".join(lines) + "\n")
 
 
 # Check if the task is overdue.
@@ -676,7 +748,7 @@ def vali_date(message):
         try:
             date = datetime.strptime(date_str, "%d %b %Y")
             return date.strftime("%d %b %Y")
-        except:
+        except ValueError:
             message = ["Invalid date","","Please, enter the date in this format: (DD Mmm YYYY)"]
 
 
@@ -691,18 +763,92 @@ def valid_user(existing_users):
             frame([f"The user '{new_user}' is not registered!"], frame_colour="Bright Red")
 
 
-# Encoding function
-def htd_encode(raw_pw, encif=""):
-    # Load the shared library
-    lib = ctypes.CDLL(os.path.abspath("encode.so"))
+# ======================================== Password Hashing (bcrypt) ========================================
+# Hash a value (password) with bcrypt.
+# bcrypt generates and embeds its own random salt in the resulting hash,
+# so no external "salt"/id argument is needed like the old htd_encode had.
+def hash_value(raw_value):
+    raw_bytes = raw_value.encode("utf-8")
+    hashed = bcrypt.hashpw(raw_bytes, bcrypt.gensalt())
+    return hashed.decode("utf-8")
 
-    # Define the argument and return types of the encode function
-    lib.encode.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
-    lib.encode.restype = ctypes.c_char_p
-    raw_pw_bytes = raw_pw.encode('utf-8')
-    encif_bytes = encif.encode('utf-8')
-    result = lib.encode(ctypes.c_char_p(raw_pw_bytes), ctypes.c_char_p(encif_bytes))
-    return result.decode('utf-8')
+
+# Verify a raw value against a previously-stored bcrypt hash.
+def verify_value(raw_value, hashed_value):
+    raw_bytes = raw_value.encode("utf-8")
+    hashed_bytes = hashed_value.encode("utf-8")
+    try:
+        return bcrypt.checkpw(raw_bytes, hashed_bytes)
+    except ValueError:
+        # Raised if hashed_value isn't a valid bcrypt hash
+        # (e.g. leftover data from the old htd_encode scheme).
+        return False
+
+
+# ======================================== Role Signing (tamper detection) ========================================
+# The role/group field is stored as plain text for readability, but that means
+# anyone with write access to users.txt could hand-edit "user" to "admin".
+# To detect that, each record is signed with an HMAC keyed by a secret that
+# lives in a separate file (SECRET_KEY_FILE), never in users.txt itself.
+# Editing the role in users.txt without also knowing the key produces a
+# signature that no longer matches, and read_users() demotes that record
+# back to "user" rather than trusting it.
+#
+# NOTE: this only stops someone who can edit users.txt but does NOT also
+# have read access to SECRET_KEY_FILE. If an attacker has the same
+# filesystem access as the app (e.g. your own user account on a shared
+# machine), they could read the key too and forge a valid signature. The
+# real boundary is OS-level file permissions — see the note by
+# _load_or_create_secret_key() below.
+SECRET_KEY_FILE = "secret.key"
+
+
+def _load_or_create_secret_key():
+    # Load the existing signing key, or generate one on first run.
+    if os.path.exists(SECRET_KEY_FILE):
+        with open(SECRET_KEY_FILE, "rb") as key_file:
+            return key_file.read()
+    key = secrets.token_bytes(32)
+    with open(SECRET_KEY_FILE, "wb") as key_file:
+        key_file.write(key)
+    # Restrict the key file to the owner only, where the OS supports it
+    # (this is the real protection — do the same for users.txt: e.g.
+    # `chmod 600 users.txt secret.key` and make sure only the account
+    # running this app owns/can write them).
+    try:
+        os.chmod(SECRET_KEY_FILE, 0o600)
+    except (AttributeError, NotImplementedError, OSError):
+        pass
+    return key
+
+
+SECRET_KEY = _load_or_create_secret_key()
+
+
+# Produce a signature binding a username to its role.
+def sign_role(name, group):
+    message = f"{name}:{group}".encode("utf-8")
+    return hmac.new(SECRET_KEY, message, hashlib.sha256).hexdigest()
+
+
+# Check whether a stored role still matches its signature.
+def role_is_valid(name, group, signature):
+    expected = sign_role(name, group)
+    return hmac.compare_digest(expected, signature)
+
+
+# Append a line to users.txt and lock the file down to the owner only,
+# so that (where the OS supports it) only the account running this app can
+# read or write it — this is the actual protection; the signature above
+# only detects tampering, it can't prevent someone who already has write
+# access from editing the file.
+def append_user_line(line):
+    with open("users.txt", "a", encoding="utf-8") as users_append:
+        users_append.write(line)
+    try:
+        os.chmod("users.txt", 0o600)
+    except (AttributeError, NotImplementedError, OSError):
+        pass
 
 
 # Run the main function if this file is executed as a script
