@@ -28,92 +28,108 @@ CLEAR = "cls" if platform.system() == "Windows" else "clear"
 def main():
     users = read_users()
     tasks = read_tasks()
+    superusers = read_superusers()
 
-    # Login the user.
-    user_id, admin = login(users)
-    # Assigning differnt colors to the welcome window
-    col = "Red" if admin else 0
-    # Printing the welcome window
-    os.system(CLEAR)
-    space = " " * math.floor((32 - len(user_id)) / 2)
-    frame([f"{space}Welcome {user_id}"], frame_colour="Green", min_width=48)
-    print("\033[A\033[A") # NOTE This is to move cursor up one line
-    
-    # Present the options menu to the user.
+    # Outer loop: lets "cu" switch to a different user without restarting
+    # the program. Every branch below stays the same as a single-user
+    # session; only "cu" (break) and "e" (exit()) ever leave the inner loop.
     while True:
-        menu = frame(entry_menu(admin), frame_colour=col, window="in").lower()
-        
-        # Execute the function corresponding to the selected option.
-        if menu == "r" and admin:
-            os.system(CLEAR)
-            users = reg_user(users)
-        elif menu == "cr" and admin:
-            os.system(CLEAR)
-            users = change_role(users)
-        elif menu == "a":
-            os.system(CLEAR)
-            tasks = add_task(users, tasks)
-        elif menu == "va":
-            os.system(CLEAR)
-            for key in tasks.keys():
-                frame(view_all(tasks, key),max_width=70)
+        user_id, admin = login(users, superusers)
+        # Assigning differnt colors to the welcome window
+        col = "Red" if admin else 0
+        # Printing the welcome window
+        os.system(CLEAR)
+        space = " " * math.floor((32 - len(user_id)) / 2)
+        frame([f"{space}Welcome {user_id}"], frame_colour="Green", min_width=48)
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
+
+        # Present the options menu to the user.
+        while True:
+            menu = frame(entry_menu(admin), frame_colour=col, window="in").lower()
+
+            # Execute the function corresponding to the selected option.
+            if menu == "r" and admin:
+                os.system(CLEAR)
+                users = reg_user(users)
+            elif menu == "cr" and admin:
+                os.system(CLEAR)
+                superusers = change_role(users, superusers, user_id)
+            elif menu == "up" and admin:
+                os.system(CLEAR)
+                users = change_user_password(users, user_id)
+            elif menu == "cp":
+                os.system(CLEAR)
+                users = change_own_password(users, user_id, admin)
+            elif menu == "a":
+                os.system(CLEAR)
+                tasks = add_task(users, tasks)
+            elif menu == "va":
+                os.system(CLEAR)
+                for key in tasks.keys():
+                    frame(view_all(tasks, key),max_width=70)
+                    print("\033[A\033[A") # NOTE This is to move cursor up one line
+            elif menu == "vm":
+                os.system(CLEAR)
+                check = True  # Variable to check if the tasks should be printed or not.
+
+                # Edit menu.
+                while True:
+                    # The following 'if' allows to print the tasks only the first time,
+                    # and when the user connected to the tasks has been changed.
+                    #if check:
+                    my_keys = view_mine(user_id, tasks)
+                    print("\033[A\033[A") # NOTE This is to move cursor up one line
+                    choice = int(frame([
+                        "Please, select one of the options below:",
+                        "",
+                        "Your task are:",
+                        f"{my_keys}",
+                        "",
+                        "Task number - to edit the task",
+                        "\t0 \t  - to go back to previous menu",
+                        ], window="in"))
+                    if choice == 0:
+                        os.system(CLEAR)
+                        break
+                    # Proceed to the edit menu only if the task selected belong to the user logged in.
+                    elif choice not in my_keys:
+                        frame(["Sorry you cannot select others tasks."], frame_colour="Bright Red")
+                        check = False
+                        pass
+                    else:
+                        check = edit_task(tasks, users, choice, admin)
+
+            elif menu == "gr" and admin:
+                os.system(CLEAR)
+                tasks_stats(tasks)
+                user_stats(users, tasks)
+                frame(["Statistics successfully saved to:","","'task_overview.txt' and 'user_overview.txt'"], colour="Bright Green")
                 print("\033[A\033[A") # NOTE This is to move cursor up one line
-        elif menu == "vm":
-            os.system(CLEAR)
-            check = True  # Variable to check if the tasks should be printed or not.
-
-            # Edit menu.
-            while True:
-                # The following 'if' allows to print the tasks only the first time,
-                # and when the user connected to the tasks has been changed.
-                #if check:
-                my_keys = view_mine(user_id, tasks)
+            elif menu == "ds" and admin:
+                os.system(CLEAR)
+                frame(display_statistics(users, tasks))
                 print("\033[A\033[A") # NOTE This is to move cursor up one line
-                choice = int(frame([
-                    "Please, select one of the options below:",
-                    "",
-                    "Your task are:",
-                    f"{my_keys}",
-                    "",
-                    "Task number - to edit the task",
-                    "\t0 \t  - to go back to previous menu",
-                    ], window="in"))
-                if choice == 0:
-                    os.system(CLEAR)
-                    break
-                # Proceed to the edit menu only if the task selected belong to the user logged in.
-                elif choice not in my_keys:
-                    frame(["Sorry you cannot select others tasks."], frame_colour="Bright Red")
-                    check = False
-                    pass
-                else:
-                    check = edit_task(tasks, users, choice, admin)
-    
-        elif menu == "gr" and admin:
-            os.system(CLEAR)
-            tasks_stats(tasks)
-            user_stats(users, tasks)
-            frame(["Statistics successfully saved to:","","'task_overview.txt' and 'user_overview.txt'"], colour="Bright Green")
-            print("\033[A\033[A") # NOTE This is to move cursor up one line
-        elif menu == "ds" and admin:
-            os.system(CLEAR)
-            frame(display_statistics(users, tasks))
-            print("\033[A\033[A") # NOTE This is to move cursor up one line
-        # Exit option
-        elif menu == "e":
-            os.system(CLEAR)
-            frame(["Thank you for using Task Manager.","","Goodbye!!!"], colour="cyan")
-            exit()
-        else:
-            os.system(CLEAR)
-            frame(["Sorry","The option selected is not valid.","Please Try again"], frame_colour="Bright Red")
-            print("\033[A\033[A") # NOTE This is to move cursor up one line
+            # Switch to a different user without exiting the program.
+            elif menu == "cu":
+                os.system(CLEAR)
+                break
+            # Exit option
+            elif menu == "e":
+                os.system(CLEAR)
+                frame(["Thank you for using Task Manager.","","Goodbye!!!"], colour="cyan")
+                exit()
+            else:
+                os.system(CLEAR)
+                frame(["Sorry","The option selected is not valid.","Please Try again"], frame_colour="Bright Red")
+                print("\033[A\033[A") # NOTE This is to move cursor up one line
+        # Reached only via "cu" - loop back to the top and log in again.
 
 
-# Function to read users from the file "users.txt"
+# Function to read users from the file "users.txt".
+# Stores ONLY username and password hash - no role/group information at
+# all. Admin rights are tracked separately, in superusers.txt.
 def read_users():
     users = {}
-    tampered = []  # names whose role signature didn't match, for a warning
     # Try to read the users lists from "users.txt"
     try:
         with open("users.txt", "r", encoding="utf-8") as users_read:
@@ -121,39 +137,24 @@ def read_users():
                 line = line.strip("\n")
                 if not line.strip():
                     continue  # skip blank lines instead of crashing on them
-                name, group, password, signature = line.split(", ")
-                if not role_is_valid(name, group, signature):
-                    # The role field doesn't match its signature — someone
-                    # (or something) edited it outside the app. Don't trust
-                    # the elevated role; fall back to the safe default.
-                    tampered.append(name)
-                    group = "user"
-                users[name] = (group, password)
+                name, password = line.split(", ")
+                users[name] = password
             if len(users) < 1:
                 raise ValueError("users.txt is empty")
     # If the file does not exist or is empty, initialise it with the default "admin" user
     except (FileNotFoundError, ValueError):
         default_user = "admin"
-        default_group = "admin"  # role is stored as plain text, not hashed
         default_password = hash_value(default_user)
-        default_signature = sign_role(default_user, default_group)
-        users[default_user] = (default_group, default_password)
-        append_user_line(f"{default_user}, {default_group}, {default_password}, {default_signature}\n")
-
-    if tampered:
-        frame(
-            [f"Warning: role for '{name}' failed its integrity check and was reset to 'user'." for name in tampered],
-            frame_colour="Bright Red",
-        )
-        print("\033[A\033[A") # NOTE This is to move cursor up one line
+        users[default_user] = default_password
+        append_user_line(f"{default_user}, {default_password}\n")
     return users
 
 
 # Function to read tasks from the file "tasks.txt"
 def read_tasks():
     tasks = {}
-    # Try to read the tasks lists from "tasks.txt"
     pos = 0
+    # Try to read the tasks lists from "tasks.txt"
     try:
         with open("tasks.txt", "r", encoding="utf-8") as tasks_read:
             for line in tasks_read:
@@ -179,11 +180,48 @@ def read_tasks():
     return tasks
 
 
+# Function to read admin-granted users from "superusers.txt". This is kept
+# entirely separate from users.txt, so a regular user record never carries
+# any role information. Each entry is signed the same way as before, so
+# hand-adding a name to this file doesn't grant admin rights either - the
+# signature has to match (see role_is_valid()).
+def read_superusers():
+    superusers = {}
+    tampered = []
+    try:
+        with open("superusers.txt", "r", encoding="utf-8") as su_read:
+            for line in su_read:
+                line = line.strip("\n")
+                if not line.strip():
+                    continue
+                name, signature = line.split(", ")
+                if role_is_valid(name, "admin", signature):
+                    superusers[name] = signature
+                else:
+                    tampered.append(name)
+    except FileNotFoundError:
+        pass  # no file yet just means nobody has been granted admin rights
+
+    if tampered:
+        frame(
+            [f"Warning: admin entry for '{name}' failed its integrity check and was ignored." for name in tampered],
+            frame_colour="Bright Red",
+        )
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
+    return superusers
+
+
 # ========================================   Login Function    ========================================
 # Program will ask and validate the user login and password:
 # - terminates after 10 wrong ID entries.
 # - terminates after 3 wrong password entries.
-def login(login):
+#
+# Admin rights:
+#  - the literal username "admin" always gets admin rights once the
+#    password is correct, by design.
+#  - any other username gets admin rights only if it appears - with a
+#    valid signature - in superusers.txt (see read_superusers()).
+def login(users, superusers):
     os.system(CLEAR)
     message = ["Enter your ID"]
     # Ask the user for their ID.
@@ -194,7 +232,7 @@ def login(login):
         id = frame(message, colour=col, frame_colour=fr_col, window="in")
         print("\033[A\033[A") # NOTE This is to move cursor up one line
         # Check if user is registered.
-        if id in login.keys():
+        if id in users.keys():
             break
         # Retry count for users.
         retry -= 1
@@ -221,8 +259,11 @@ def login(login):
         user_pw = frame(message, colour=col, frame_colour=fr_col, window="in")
         print("\033[A\033[A") # NOTE This is to move cursor up one line
         # Check validity of password.
-        if verify_value(user_pw, login[id][1]):
-            admin = login[id][0] == "admin"  # role is stored as plain text
+        if verify_value(user_pw, users[id]):
+            if id == "admin":
+                admin = True
+            else:
+                admin = id in superusers
             break
         # Retry count for passwords.
         retry -= 1
@@ -242,27 +283,35 @@ def login(login):
 def entry_menu(extended):
     menu_options = ["Please, select one of the options below:",""]
     if extended:
-        menu_options.append(("r  - Registering a user","Red"))
+        menu_options.append(("r -- Registering a user","Red"))
     else:
         menu_options.append("")
     menu_options.extend([
-        "a  - Adding a task",
+        "a -- Adding a task",
         "va - View all tasks",
-        "vm - View my tasks"
+        "vm - View my tasks",
+        "cp - Change password",
     ])
     if extended:
         menu_options.extend([
             ("gr - Generate Reports", "Red"),
             ("ds - Display Statistics", "Red"),
-            ("cr - Change a user's role", "Red")
+            ("cr - Change a user's role", "Red"),
+            ("up - Change user's password", "Red"),
         ])
     else:
-        menu_options.extend(["","",""])
-    menu_options.append("e  - Exit")
+        menu_options.extend(["","","",""])
+    menu_options.append("cu - Change user")
+    menu_options.append("e -- Exit")
     return menu_options
 
 
 # Register a new user after checking if it is already existing.
+# Admin-only - and since admin is assigning this password, no strength
+# rules are enforced here (see hash_value()/change_own_password() for
+# where rules DO apply, for a non-admin changing their own password).
+# New users get no role at all; admin rights are granted afterwards via
+# the "cr" command (change_role()), which writes to superusers.txt.
 def reg_user(old_users):
     # Check if the ID entered already exists.
     while True:
@@ -273,100 +322,162 @@ def reg_user(old_users):
             print("\033[A\033[A") # NOTE This is to move cursor up one line
         else:
             break
-
     os.system(CLEAR)
 
-    # Ask if the new user should be added to the admin group
-    while True:
-        new_user_group = frame([f"Please, enter {new_user}'s group: [user/admin]"], window="in").lower()
-        print("\033[A\033[A") # NOTE This is to move cursor up one line
-        if new_user_group in ["root", "admin"]:
-            group = "admin"  # role is stored as plain text, not hashed
-            break
-        elif new_user_group == "user":
-            group = "user"
-            break
-        else:
-            os.system(CLEAR)
-            frame([f"The group '{new_user_group}' does not exist!"], colour="yellow")
-            print("\033[A\033[A") # NOTE This is to move cursor up one line
-    os.system(CLEAR)
-
-    # Ask for a valid password.
+    # Ask for the new user's password - admin can set anything, as long
+    # as the two entries match.
     while True:
         new_password = frame([f"Enter a new password for '{new_user}'"], window="in")
         print("\033[A\033[A") # NOTE This is to move cursor up one line
-        if new_password not in ["user", "admin", "root", new_user] and len(new_password) > 3:
-            pw_confirmation = frame(["Confirm the password"], window="in")
-            if new_password == pw_confirmation:
-                break
-            # add check for empty passwords, also to taskmaster.py
-            else:
-                os.system(CLEAR)
-                frame(["The passwords do not match!"])
-                print("\033[A\033[A") # NOTE This is to move cursor up one line
-        else:
-            os.system(CLEAR)
-            frame(["Password must be at least 4 characters long!", "Password cannot be the same as the user name or group!"], colour="red")
-            print("\033[A\033[A") # NOTE This is to move cursor up one line
+        pw_confirmation = frame(["Confirm the password"], window="in")
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
+        if new_password == pw_confirmation:
+            break
+        os.system(CLEAR)
+        frame(["The passwords do not match!"])
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
     new_password = hash_value(new_password)
 
     # Update the variable containing the users and passwords
     # and write to the file 'users.txt'.
-    old_users[new_user] = (group, new_password)
-    new_signature = sign_role(new_user, group)
-    append_user_line(f"{new_user}, {group}, {new_password}, {new_signature}\n")
+    old_users[new_user] = new_password
+    append_user_line(f"{new_user}, {new_password}\n")
     os.system(CLEAR)
     frame([f"User '{new_user}' successfully recorded!"], colour="green")
     print("\033[A\033[A") # NOTE This is to move cursor up one line
     return old_users
 
 
-# Rewrite the whole users.txt file from the in-memory users dict, signing
-# every role fresh. Used whenever an existing user's role changes, so the
-# stored signature always matches what's actually being granted.
-def write_users_to_file(users):
-    lines = []
-    for name, (group, password) in users.items():
-        signature = sign_role(name, group)
-        lines.append(f"{name}, {group}, {password}, {signature}")
-    with open("users.txt", "w", encoding="utf-8") as users_write:
-        users_write.write("\n".join(lines) + "\n")
-    try:
-        os.chmod("users.txt", 0o600)
-    except (AttributeError, NotImplementedError, OSError):
-        pass
-
-
-# Admin-only: change an existing user's role the proper, signed way,
-# instead of hand-editing users.txt (which the signature check would
-# always reject, by design - see role_is_valid()).
-def change_role(users):
-    while True:
-        target_user = frame(["Enter the user whose role you want to change"], window="in")
-        print("\033[A\033[A") # NOTE This is to move cursor up one line
-        if target_user in users.keys():
-            break
+# Shared by "cr" and "up": pick a user other than the one currently logged
+# in. Returns None (and shows an appropriate message) if there are no
+# other users, or if the admin chooses to go back without picking one.
+def select_target_user(users, current_user_id):
+    eligible = [name for name in users.keys() if name != current_user_id]
+    if not eligible:
         os.system(CLEAR)
-        frame([f"The user '{target_user}' is not registered!"], frame_colour="Bright Red")
+        frame(["There are no other users."], frame_colour="Bright Red")
         print("\033[A\033[A") # NOTE This is to move cursor up one line
+        return None
+
+    while True:
+        target = frame(
+            ["Select a user:", "", ", ".join(eligible), "", "Enter the username, or 0 to go back"],
+            window="in",
+        )
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
+        if target == "0":
+            os.system(CLEAR)
+            return None
+        if target in eligible:
+            return target
+        os.system(CLEAR)
+        frame([f"The user '{target}' is not registered!"], frame_colour="Bright Red")
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
+
+
+# Admin-only ("cr"): grant or revoke admin rights for another user by
+# updating superusers.txt with a freshly-signed entry (or removing it).
+# NOTE: the literal username "admin" always has admin rights on login
+# regardless of superusers.txt (see login()), so changing its role here
+# has no practical effect - it's kept selectable for consistency, but
+# admin status for that one account can't be revoked this way.
+def change_role(users, superusers, current_user_id):
+    target_user = select_target_user(users, current_user_id)
+    if target_user is None:
+        return superusers
     os.system(CLEAR)
 
     while True:
         new_group = frame([f"Enter {target_user}'s new role: [user/admin]"], window="in").lower()
         print("\033[A\033[A") # NOTE This is to move cursor up one line
-        if new_group in ("user", "admin", "root"):
-            new_group = "admin" if new_group in ("admin", "root") else "user"
+        if new_group in ("root", "admin"):
+            new_group = "admin"
             break
-        os.system(CLEAR)
-        frame([f"The group '{new_group}' does not exist!"], colour="yellow")
-        print("\033[A\033[A") # NOTE This is to move cursor up one line
+        elif new_group == "user":
+            break
+        else:
+            os.system(CLEAR)
+            frame([f"The group '{new_group}' does not exist!"], colour="yellow")
+            print("\033[A\033[A") # NOTE This is to move cursor up one line
 
-    password = users[target_user][1]
-    users[target_user] = (new_group, password)
-    write_users_to_file(users)
+    if new_group == "admin":
+        superusers[target_user] = sign_role(target_user, "admin")
+    else:
+        superusers.pop(target_user, None)
+    write_superusers_to_file(superusers)
+
     os.system(CLEAR)
     frame([f"'{target_user}' role changed to: {new_group}"], colour="green")
+    print("\033[A\033[A") # NOTE This is to move cursor up one line
+    return superusers
+
+
+# Any logged-in user ("cp"): change their own password. Regular users
+# must follow the usual rules (min length, can't match the username);
+# an admin changing their own password can set anything, per
+# "admin can give any passwords to itself or other users".
+def change_own_password(users, user_id, admin):
+    os.system(CLEAR)
+    if admin:
+        while True:
+            new_password = frame([f"Enter a new password for '{user_id}'"], window="in")
+            print("\033[A\033[A") # NOTE This is to move cursor up one line
+            pw_confirmation = frame(["Confirm the password"], window="in")
+            print("\033[A\033[A") # NOTE This is to move cursor up one line
+            if new_password == pw_confirmation:
+                break
+            os.system(CLEAR)
+            frame(["The passwords do not match!"])
+            print("\033[A\033[A") # NOTE This is to move cursor up one line
+    else:
+        while True:
+            new_password = frame(["Enter your new password"], window="in")
+            print("\033[A\033[A") # NOTE This is to move cursor up one line
+            if new_password != user_id and len(new_password) > 3:
+                pw_confirmation = frame(["Confirm the password"], window="in")
+                print("\033[A\033[A") # NOTE This is to move cursor up one line
+                if new_password == pw_confirmation:
+                    break
+                os.system(CLEAR)
+                frame(["The passwords do not match!"])
+                print("\033[A\033[A") # NOTE This is to move cursor up one line
+            else:
+                os.system(CLEAR)
+                frame(["Password must be at least 4 characters long!", "Password cannot be the same as your user name!"], colour="red")
+                print("\033[A\033[A") # NOTE This is to move cursor up one line
+
+    users[user_id] = hash_value(new_password)
+    write_users_to_file(users)
+    os.system(CLEAR)
+    frame(["Password successfully updated!"], colour="green")
+    print("\033[A\033[A") # NOTE This is to move cursor up one line
+    return users
+
+
+# Admin-only ("up"): change another user's password. No rules enforced -
+# admin can set anything, per "admin can give any passwords to itself or
+# other users".
+def change_user_password(users, current_user_id):
+    target_user = select_target_user(users, current_user_id)
+    if target_user is None:
+        return users
+    os.system(CLEAR)
+
+    while True:
+        new_password = frame([f"Enter a new password for '{target_user}'"], window="in")
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
+        pw_confirmation = frame(["Confirm the password"], window="in")
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
+        if new_password == pw_confirmation:
+            break
+        os.system(CLEAR)
+        frame(["The passwords do not match!"])
+        print("\033[A\033[A") # NOTE This is to move cursor up one line
+
+    users[target_user] = hash_value(new_password)
+    write_users_to_file(users)
+    os.system(CLEAR)
+    frame([f"Password for '{target_user}' successfully updated!"], colour="green")
     print("\033[A\033[A") # NOTE This is to move cursor up one line
     return users
 
@@ -508,7 +619,7 @@ def edit_task(tasks_for_edit, users_for_edit, to_edit, admin):
             frame(view_all(tasks_for_edit,to_edit))
             frame([f"New due date for task {to_edit} is: {new_due}"], colour="green")
             return False
-        
+
         # Change the user for the selected task.
         elif to_change == "3":
             new_user = valid_user(users_for_edit)
@@ -605,7 +716,7 @@ def user_stats(users_list, tasks_list):
             usr_over_perc = "N/A"
             pass
         else:
-   
+
             # Calculate Percent of completed tasks.
             usr_comp_perc = f"{(usr_completed/usr_tasks * 100):.2f}%"
 
@@ -663,7 +774,7 @@ def display_statistics(users, tasks):
             tasks_stats(tasks)
 
     overview_print.extend(["", ""])
-    
+
     # Read the statistics from the file 'user_overview.txt'
     # and create a formatting for printing it out.
     # If the file does not exist, it execute the function to generate the file.
@@ -723,7 +834,7 @@ def write_to_file(task_to_write, txt_out="tasks.txt"):
     lines = []
     for item in range(1, len(task_to_write) + 1):
         task = task_to_write[item]
-        # NOTE: no trailing ", " after the last field — a trailing comma here
+        # NOTE: no trailing ", " after the last field - a trailing comma here
         # used to leave an empty string in the "completed" (Yes/No) column
         # every time a task was edited, silently breaking status checks.
         lines.append(f"{task[0]}, {task[1]}, {task[2]}, {task[3]}, {task[4]}, {task[5]}")
@@ -786,20 +897,21 @@ def verify_value(raw_value, hashed_value):
 
 
 # ======================================== Role Signing (tamper detection) ========================================
-# The role/group field is stored as plain text for readability, but that means
-# anyone with write access to users.txt could hand-edit "user" to "admin".
-# To detect that, each record is signed with an HMAC keyed by a secret that
-# lives in a separate file (SECRET_KEY_FILE), never in users.txt itself.
-# Editing the role in users.txt without also knowing the key produces a
-# signature that no longer matches, and read_users() demotes that record
-# back to "user" rather than trusting it.
+# superusers.txt lists usernames that have been granted admin rights. Each
+# entry is signed with an HMAC keyed by a secret that lives in a separate
+# file (SECRET_KEY_FILE), never in superusers.txt itself. Hand-adding a
+# name to superusers.txt without knowing the key produces a signature that
+# doesn't match, and read_superusers() ignores that entry rather than
+# trusting it.
 #
-# NOTE: this only stops someone who can edit users.txt but does NOT also
-# have read access to SECRET_KEY_FILE. If an attacker has the same
+# NOTE: this only stops someone who can edit superusers.txt but does NOT
+# also have read access to SECRET_KEY_FILE. If an attacker has the same
 # filesystem access as the app (e.g. your own user account on a shared
 # machine), they could read the key too and forge a valid signature. The
-# real boundary is OS-level file permissions — see the note by
-# _load_or_create_secret_key() below.
+# real boundary is OS-level file permissions - lock down users.txt,
+# superusers.txt and secret.key to the account that runs this app
+# (e.g. `chmod 600 users.txt superusers.txt secret.key`); this code does
+# that automatically wherever the OS supports it.
 SECRET_KEY_FILE = "secret.key"
 
 
@@ -811,10 +923,6 @@ def _load_or_create_secret_key():
     key = secrets.token_bytes(32)
     with open(SECRET_KEY_FILE, "wb") as key_file:
         key_file.write(key)
-    # Restrict the key file to the owner only, where the OS supports it
-    # (this is the real protection — do the same for users.txt: e.g.
-    # `chmod 600 users.txt secret.key` and make sure only the account
-    # running this app owns/can write them).
     try:
         os.chmod(SECRET_KEY_FILE, 0o600)
     except (AttributeError, NotImplementedError, OSError):
@@ -825,7 +933,7 @@ def _load_or_create_secret_key():
 SECRET_KEY = _load_or_create_secret_key()
 
 
-# Produce a signature binding a username to its role.
+# Produce a signature binding a username to a role.
 def sign_role(name, group):
     message = f"{name}:{group}".encode("utf-8")
     return hmac.new(SECRET_KEY, message, hashlib.sha256).hexdigest()
@@ -839,14 +947,37 @@ def role_is_valid(name, group, signature):
 
 # Append a line to users.txt and lock the file down to the owner only,
 # so that (where the OS supports it) only the account running this app can
-# read or write it — this is the actual protection; the signature above
-# only detects tampering, it can't prevent someone who already has write
-# access from editing the file.
+# read or write it.
 def append_user_line(line):
     with open("users.txt", "a", encoding="utf-8") as users_append:
         users_append.write(line)
     try:
         os.chmod("users.txt", 0o600)
+    except (AttributeError, NotImplementedError, OSError):
+        pass
+
+
+# Rewrite the whole users.txt file from the in-memory users dict (name ->
+# password hash). Used whenever an existing user's password changes.
+def write_users_to_file(users):
+    lines = [f"{name}, {password}" for name, password in users.items()]
+    with open("users.txt", "w", encoding="utf-8") as users_write:
+        users_write.write("\n".join(lines) + "\n")
+    try:
+        os.chmod("users.txt", 0o600)
+    except (AttributeError, NotImplementedError, OSError):
+        pass
+
+
+# Rewrite the whole superusers.txt file from the in-memory superusers dict
+# (name -> signature), signing every entry fresh. Used whenever admin
+# rights are granted to or revoked from a user.
+def write_superusers_to_file(superusers):
+    lines = [f"{name}, {sign_role(name, 'admin')}" for name in superusers.keys()]
+    with open("superusers.txt", "w", encoding="utf-8") as su_write:
+        su_write.write(("\n".join(lines) + "\n") if lines else "")
+    try:
+        os.chmod("superusers.txt", 0o600)
     except (AttributeError, NotImplementedError, OSError):
         pass
 
